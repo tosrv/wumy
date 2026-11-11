@@ -53,6 +53,19 @@ Lewati pembayaran di project **development**: jalankan [`supabase/dev/mark_paid.
 
 Variabel rahasia jangan pernah diberi awalan `VITE_`. Redeploy Vercel setelah mengubah env. Tanpa konfigurasi DOKU lengkap, `/order` menampilkan "Pembayaran online segera hadir".
 
+## Staging (`dev.wumy.my.id`)
+
+Branch `dev` dideploy sebagai Vercel **Preview** dengan domain `dev.wumy.my.id`, Supabase **dev** terpisah, dan DOKU **sandbox**. Env vars Preview (branch `dev`):
+
+| Variable | Nilai |
+| --- | --- |
+| `STAGING_PASSWORD` | Password kunci staging (server saja). Login: user `wumy` + password ini. Kosong = tidak dikunci |
+| `VITE_APP_ENV` | `staging` → label "Staging" di pojok layar |
+| `VITE_SITE_URL` | `https://dev.wumy.my.id` |
+| Supabase / DOKU | kunci project dev dan sandbox (`DOKU_API_BASE=https://api-sandbox.doku.com`) |
+
+Kunci staging (`src/server/staging/gate.ts`) meminta Basic Auth untuk semua halaman, kecuali `POST /api/webhooks/doku` (dilindungi tanda tangan DOKU), dan menambahkan `X-Robots-Tag: noindex`. Production tidak terpengaruh karena tidak punya `STAGING_PASSWORD`. Matikan Vercel Deployment Protection untuk Preview agar webhook DOKU sandbox bisa masuk.
+
 ## Pembayaran (DOKU Checkout)
 
 - `/order` memanggil server function `createPublishCheckout` → halaman DOKU → kembali ke `/payment/status?invoice=…`.
