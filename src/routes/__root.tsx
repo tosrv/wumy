@@ -119,6 +119,17 @@ function RootShell({ children }: { children: ReactNode }) {
   );
 }
 
+/** Build-time flag: set VITE_APP_ENV=staging on the dev / Preview environment. */
+const IS_STAGING = import.meta.env["VITE_APP_ENV"] === "staging";
+
+function StagingBanner() {
+  return (
+    <div className="pointer-events-none fixed bottom-2 left-2 z-[100] rounded-full bg-[#141413] px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-[#CAEF45] shadow-lg">
+      Staging · data uji · pembayaran sandbox
+    </div>
+  );
+}
+
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const router = useRouter();
@@ -134,6 +145,7 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
+        {IS_STAGING && <StagingBanner />}
         <Outlet />
         <Toaster />
       </AuthProvider>
