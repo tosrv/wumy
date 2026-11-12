@@ -1,9 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { AdminPage } from "@/components/admin/AdminPage";
+import { AdminLayout } from "@/components/admin/AdminPages";
 import { buildPageHead } from "@/lib/seo";
 
 export const Route = createFileRoute("/admin")({
-  component: AdminPage,
+  component: AdminLayout,
   head: () =>
     buildPageHead({
       title: "Admin",
