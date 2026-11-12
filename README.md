@@ -117,10 +117,8 @@ Admins can list invitations and payments, mark an invitation as paid without a D
 - Every admin action goes through a server function (`src/server/admin/`) that checks the session and `admin_users` first. Non-admins and signed-out visitors get the normal 404 page.
 - **Mark as paid** records a Rp0 `manual` payment and runs `mark_invitation_paid` (the same path as the DOKU webhook). It does not publish; the owner still presses **Terbitkan**. A reason is required and written to the activity log.
 - **Create for client** (Invitations page) sets up an invitation for a client who asked you to, or a free/promo one:
-  - If the email has no account yet, Supabase sends an **invite email**; the client sets their own password at `/reset-password` (already in Redirect URLs), so the admin never handles it. An existing account is reused, unless it already has an invitation or is an admin.
-  - Creates a draft invitation (slug from the couple's names), optionally marks it paid, and logs both steps. The client fills it in and presses **Terbitkan**.
-  - Optional: translate Supabase **Authentication → Emails → Invite user** (keep `{{ .ConfirmationURL }}`).
-  - Needs `VITE_SITE_URL` on the server so the invite link points at the right domain.
+  - If the email has no account yet, it is created right away with the password you set (or **Generate**), with the email marked confirmed. **No email is sent**; share the login with the client privately. An existing account is reused and keeps its password, unless it already has an invitation or is an admin.
+  - Creates a draft invitation (slug from the couple's names), optionally marks it paid, and logs both steps (never the password). The client fills it in and presses **Terbitkan**.
 - **Set password** (row menu ⋯ on Invitations) sets a new password for the invitation's owner directly, for a client who can't use the reset email. It must meet the strong-password rules (there is a **Generate** button). The old password stops working immediately; the new one is never written to the activity log, only that it was changed. Admin accounts are refused. Share the password with the client privately and ask them to change it in **Settings**.
 - Requires `SUPABASE_SERVICE_ROLE_KEY` on the server.
 

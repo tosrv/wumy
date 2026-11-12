@@ -77,6 +77,7 @@ export async function createInvitationForClient(input: {
   templateId: string;
   markPaid: boolean;
   note: string;
+  password: string;
 }) {
   return adminCreateInvitationForClient({ data: { accessToken: await requireToken(), ...input } });
 }

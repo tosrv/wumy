@@ -88,6 +88,7 @@ export const adminCreateInvitationForClient = createServerFn({ method: "POST" })
       templateId: z.string().min(1).max(64),
       markPaid: z.boolean(),
       note: z.string().trim().min(3).max(500),
+      password: z.string().min(1).max(128),
     }),
   )
   .handler(async ({ data }): Promise<CreateForClientResult | { error: string }> => {
@@ -96,7 +97,7 @@ export const adminCreateInvitationForClient = createServerFn({ method: "POST" })
     const { templateExists } = await import("@/data/templates");
     const { slugifyCouple } = await import("@/lib/invitations");
     const { isReservedSlug } = await import("@/lib/slug");
-    const { absoluteUrl } = await import("@/lib/seo");
+    const { isStrongPassword } = await import("@/lib/password");
     if (!templateExists(data.templateId)) return { error: "Unknown template." };
     try {
       return await createInvitationForClient(
@@ -109,9 +110,9 @@ export const adminCreateInvitationForClient = createServerFn({ method: "POST" })
           templateId: data.templateId,
           markPaid: data.markPaid,
           note: data.note,
-          setPasswordUrl: absoluteUrl("/reset-password"),
+          password: data.password,
         },
-        { slugFor: slugifyCouple, isReserved: isReservedSlug },
+        { slugFor: slugifyCouple, isReserved: isReservedSlug, isStrong: isStrongPassword },
       );
     } catch (err) {
       // Expected problems (existing invitation, admin email) go back to the admin as text.
