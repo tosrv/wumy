@@ -35,7 +35,7 @@ Before committing, run `npx tsc --noEmit`, `npm test`, and `npm run lint` (0 err
   - `api/webhooks/doku.ts`: DOKU payment webhook.
 - `src/components/`: `ui/` (shadcn + shared components, e.g. `password-input.tsx`), `site/`, `dashboard/`, `editor/`, `invitations/`, `order/`, `payments/`.
 - `src/lib/`: shared logic + unit tests (`*.test.ts` next to the source file).
-- `src/server/`: server-only code (payments, R2 storage, staging gate, share meta).
+- `src/server/`: server-only code (payments, R2 storage, staging gate, security headers, share meta). `src/server.ts` wraps every response with `withSecurityHeaders`; if a new feature needs to be framed or use camera/mic/location, update `src/server/security-headers.ts`.
 - Storage: always go through `src/lib/storage.ts` (Supabase Storage or Cloudflare R2, picked by `VITE_STORAGE_PUBLIC_URL`); bucket limits and path rules live in `src/lib/storage-rules.ts`.
 - `src/templates/`, `src/data/templates.ts`: invitation templates.
 - `supabase/schema.sql`: full schema (tables, RLS, triggers, functions, storage). `supabase/dev/`: development-only scripts.

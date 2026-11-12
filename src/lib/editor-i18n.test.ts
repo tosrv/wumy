@@ -1,5 +1,5 @@
-import { describe, expect, it } from "vitest";
-import { EDITOR_STRINGS, t } from "@/lib/editor-i18n";
+import { describe, expect, it, vi } from "vitest";
+import { EDITOR_STRINGS, EditorError, editorErrorText, t } from "@/lib/editor-i18n";
 
 describe("editor i18n", () => {
   it("every key exists in both locales", () => {
@@ -34,5 +34,44 @@ describe("partner labels", () => {
         expect(t(locale, key)).not.toMatch(/wanita|pria|bride|groom/i);
       }
     }
+  });
+});
+
+describe("t with params", () => {
+  it("fills placeholders", () => {
+    expect(t("id", "photosUploaded", { n: 3 })).toBe("3 foto berhasil diunggah.");
+    expect(t("en", "publishSuccess", { slug: "ayu-budi" })).toBe(
+      "Your invitation is live at /ayu-budi",
+    );
+  });
+});
+
+describe("editorErrorText", () => {
+  it("translates EditorError keys", () => {
+    expect(
+      editorErrorText(new EditorError("photoCapReached", { n: 6 }), "id", "photoUploadFailed"),
+    ).toBe("Galeri sudah berisi 6 foto, jumlah maksimal.");
+  });
+
+  it("maps known database errors", () => {
+    expect(
+      editorErrorText(new Error("Payment required before publishing"), "id", "publishFailed"),
+    ).toBe("Selesaikan pembayaran sebelum menerbitkan undangan.");
+    expect(
+      editorErrorText(
+        new Error("An invitation can have at most 6 gallery photos"),
+        "en",
+        "photoUploadFailed",
+      ),
+    ).toBe("The gallery already has 6 photos, the maximum.");
+  });
+
+  it("falls back to a localized message for unknown errors", () => {
+    const spy = vi.spyOn(console, "error").mockImplementation(() => {});
+    expect(editorErrorText(new Error("fetch failed"), "id", "publishFailed")).toBe(
+      "Gagal menerbitkan undangan.",
+    );
+    expect(spy).toHaveBeenCalledOnce();
+    spy.mockRestore();
   });
 });

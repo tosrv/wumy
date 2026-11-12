@@ -8,7 +8,7 @@ import {
   uploadInvitationPhotos,
   type InvitationPhotoRow,
 } from "@/lib/invitations";
-import { t } from "@/lib/editor-i18n";
+import { editorErrorText, t } from "@/lib/editor-i18n";
 import type { Locale } from "@/lib/invitation-content";
 import { cn } from "@/lib/utils";
 
@@ -60,7 +60,7 @@ export function PhotoSlot({
       }
       onChange();
     } catch (err) {
-      setError(err instanceof Error ? err.message : t(locale, "photoUploadFailed"));
+      setError(editorErrorText(err, locale, "photoUploadFailed"));
       onChange();
     } finally {
       setBusy(false);

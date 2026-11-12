@@ -21,7 +21,7 @@ import {
   type InvitationRow,
 } from "@/lib/invitations";
 import { photoRoleSchema } from "@/lib/invitation-content";
-import { t } from "@/lib/editor-i18n";
+import { editorErrorText, t } from "@/lib/editor-i18n";
 import {
   contentFromValues,
   editorFormSchema,
@@ -169,9 +169,13 @@ export function EditorPage({ userId, invitation }: EditorPageProps) {
     try {
       setPhotos(await listInvitationPhotos(invitation.id));
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load photos.");
+      setError(editorErrorText(err, locale, "photosLoadFailed"));
     }
-  }, [invitation.id]);
+  }, [invitation.id, locale]);
+
+  // Read through a ref so switching the invitation language doesn't refetch photos.
+  const localeRef = useRef(locale);
+  localeRef.current = locale;
 
   useEffect(() => {
     let cancelled = false;
@@ -182,7 +186,7 @@ export function EditorPage({ userId, invitation }: EditorPageProps) {
       })
       .catch((err: unknown) => {
         if (!cancelled) {
-          setError(err instanceof Error ? err.message : "Failed to load photos.");
+          setError(editorErrorText(err, localeRef.current, "photosLoadFailed"));
         }
       })
       .finally(() => {
@@ -261,7 +265,7 @@ export function EditorPage({ userId, invitation }: EditorPageProps) {
         setError(null);
       } catch (err) {
         // Form state is kept; the error is shown and the next change retries.
-        setError(err instanceof Error ? err.message : "Failed to save.");
+        setError(editorErrorText(err, normalized.locale, "saveFailed"));
         throw err;
       }
     },
@@ -285,11 +289,11 @@ export function EditorPage({ userId, invitation }: EditorPageProps) {
 
   async function handleSave() {
     if (!templateId) {
-      setError("Pick a template.");
+      setError(t(locale, "pickTemplate"));
       return;
     }
     if (!partnerAName.trim() || !partnerBName.trim()) {
-      setError("Both names are required.");
+      setError(t(locale, "namesRequired"));
       return;
     }
     if (isLiveSaveBlocked(status, getValues())) {
@@ -302,7 +306,7 @@ export function EditorPage({ userId, invitation }: EditorPageProps) {
     setError(null);
     setSuccess(null);
     try {
-      if (await autosave.saveNow(getValues())) setSuccess("Draft saved.");
+      if (await autosave.saveNow(getValues())) setSuccess(t(locale, "draftSaved"));
     } finally {
       setSaving(false);
     }
@@ -313,13 +317,13 @@ export function EditorPage({ userId, invitation }: EditorPageProps) {
     const galleryCount = photos.filter((p) => p.role === "gallery").length;
     const remaining = MAX_INVITATION_PHOTOS - galleryCount;
     if (remaining <= 0) {
-      setError(`You already have ${MAX_INVITATION_PHOTOS} photos.`);
+      setError(t(locale, "photoCapReached", { n: MAX_INVITATION_PHOTOS }));
       return;
     }
     const nextFiles = Array.from(files).slice(0, remaining);
     const tooBig = nextFiles.find((file) => file.size > MAX_PHOTO_INPUT_BYTES);
     if (tooBig) {
-      setError("Each photo must be under 20MB.");
+      setError(t(locale, "photoTooLarge"));
       return;
     }
 
@@ -328,9 +332,13 @@ export function EditorPage({ userId, invitation }: EditorPageProps) {
     try {
       const created = await uploadInvitationPhotos(userId, invitation.id, nextFiles);
       setPhotos((current) => [...current, ...created]);
-      setSuccess(created.length === 1 ? "Photo uploaded." : `${created.length} photos uploaded.`);
+      setSuccess(
+        created.length === 1
+          ? t(locale, "photoUploaded")
+          : t(locale, "photosUploaded", { n: created.length }),
+      );
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to upload photos.");
+      setError(editorErrorText(err, locale, "photoUploadFailed"));
     } finally {
       setPhotoBusy(false);
     }
@@ -342,9 +350,9 @@ export function EditorPage({ userId, invitation }: EditorPageProps) {
     try {
       await deleteInvitationPhoto(photo);
       setPhotos((current) => current.filter((item) => item.id !== photo.id));
-      setSuccess("Photo removed.");
+      setSuccess(t(locale, "photoRemoved"));
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to remove photo.");
+      setError(editorErrorText(err, locale, "photoRemoveFailed"));
     } finally {
       setPhotoBusy(false);
     }
@@ -357,7 +365,7 @@ export function EditorPage({ userId, invitation }: EditorPageProps) {
       await action();
       await reloadPhotos();
     } catch (err) {
-      setError(err instanceof Error ? err.message : t(locale, "photoActionFailed"));
+      setError(editorErrorText(err, locale, "photoActionFailed"));
     } finally {
       setPhotoBusy(false);
     }
@@ -378,18 +386,18 @@ export function EditorPage({ userId, invitation }: EditorPageProps) {
       await deleteInvitation(invitation.id);
       void router.navigate({ to: "/dashboard" });
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to delete.");
+      setError(editorErrorText(err, locale, "deleteFailed"));
       setDangerBusy(false);
     }
   }
 
   async function handlePublish() {
     if (!templateId) {
-      setError("Pick a template.");
+      setError(t(locale, "pickTemplate"));
       return;
     }
     if (!partnerAName.trim() || !partnerBName.trim()) {
-      setError("Both names are required.");
+      setError(t(locale, "namesRequired"));
       return;
     }
     const issues = collectPublishIssues(getValues());
@@ -413,10 +421,10 @@ export function EditorPage({ userId, invitation }: EditorPageProps) {
       const published = await publishInvitation(invitation.id);
       setStatus(published.status);
       setPublishedAt(published.published_at);
-      setSuccess(`Undangan sudah tayang di /${published.slug}`);
+      setSuccess(t(locale, "publishSuccess", { slug: published.slug }));
       track("published");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Gagal menerbitkan.");
+      setError(editorErrorText(err, locale, "publishFailed"));
     } finally {
       setPublishing(false);
     }
