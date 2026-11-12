@@ -4,6 +4,7 @@ import {
   adminListAuditLog,
   adminListInvitations,
   adminListPayments,
+  adminCreateInvitationForClient,
   adminMarkInvitationPaid,
   getAdminStatus,
 } from "@/server/admin/functions";
@@ -66,4 +67,15 @@ export async function markInvitationPaidAsAdmin(invitationId: string, note: stri
   return adminMarkInvitationPaid({
     data: { accessToken: await requireToken(), invitationId, note },
   });
+}
+
+export async function createInvitationForClient(input: {
+  email: string;
+  partnerA: string;
+  partnerB: string;
+  templateId: string;
+  markPaid: boolean;
+  note: string;
+}) {
+  return adminCreateInvitationForClient({ data: { accessToken: await requireToken(), ...input } });
 }
