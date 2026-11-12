@@ -70,7 +70,8 @@ function OrderRoute() {
         }
         setInvitation(inv);
       })
-      .catch(() => {
+      .catch((err: unknown) => {
+        console.error("Order could not be opened:", err);
         if (!cancelled) setError("Pesanan tidak dapat dibuka. Coba muat ulang halaman ini.");
       });
     return () => {

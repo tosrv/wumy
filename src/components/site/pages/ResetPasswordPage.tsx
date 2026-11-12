@@ -2,6 +2,8 @@ import { useEffect, useState, type FormEvent } from "react";
 import { Link, useRouter } from "@tanstack/react-router";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import { newPasswordIssue } from "@/lib/password";
+import { PasswordRequirements } from "@/components/ui/password-requirements";
+import { PasswordInput } from "@/components/ui/password-input";
 
 const inputClass =
   "h-12 rounded-2xl border border-border-subtle bg-surface-canvas px-4 font-body-md text-body-md text-charcoal outline-none placeholder:text-text-muted focus-visible:ring-2 focus-visible:ring-charcoal/20";
@@ -107,23 +109,22 @@ export function ResetPasswordPage() {
                 <span className="font-body-sm text-body-sm font-semibold text-charcoal">
                   Kata sandi baru
                 </span>
-                <input
+                <PasswordInput
                   required
-                  type="password"
                   autoComplete="new-password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Minimal 8 karakter"
+                  placeholder="Buat kata sandi yang kuat"
                   className={inputClass}
                 />
+                <PasswordRequirements password={password} className="mt-1" />
               </label>
               <label className="flex flex-col gap-2">
                 <span className="font-body-sm text-body-sm font-semibold text-charcoal">
                   Ulangi kata sandi
                 </span>
-                <input
+                <PasswordInput
                   required
-                  type="password"
                   autoComplete="new-password"
                   value={confirm}
                   onChange={(e) => setConfirm(e.target.value)}

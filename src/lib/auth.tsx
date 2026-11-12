@@ -16,12 +16,20 @@ type AuthContextValue = {
   loading: boolean;
   session: Session | null;
   user: User | null;
-  signIn: (email: string, password: string) => Promise<{ error: string | null }>;
+  /** `captchaToken` is required by Supabase when CAPTCHA protection is enabled. */
+  signIn: (
+    email: string,
+    password: string,
+    captchaToken?: string,
+  ) => Promise<{ error: string | null }>;
   signUp: (
     email: string,
     password: string,
     fullName: string,
+    captchaToken?: string,
   ) => Promise<{ error: string | null }>;
+  /** Redirects to Google; on return the session is picked up from the URL. */
+  signInWithGoogle: (redirectTo: string) => Promise<{ error: string | null }>;
   signOut: () => Promise<void>;
 };
 
@@ -70,7 +78,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     loading,
     session,
     user: session?.user ?? null,
-    async signIn(email, password) {
+    async signIn(email, password, captchaToken) {
       const supabase = getSupabaseBrowserClient();
       if (!supabase) {
         return {
@@ -81,10 +89,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const { error } = await supabase.auth.signInWithPassword({
         email,
         password,
+        ...(captchaToken ? { options: { captchaToken } } : {}),
       });
       return { error: error?.message ?? null };
     },
-    async signUp(email, password, fullName) {
+    async signUp(email, password, fullName, captchaToken) {
       const supabase = getSupabaseBrowserClient();
       if (!supabase) {
         return {
@@ -97,7 +106,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         password,
         options: {
           data: { full_name: fullName },
+          ...(captchaToken ? { captchaToken } : {}),
         },
+      });
+      return { error: error?.message ?? null };
+    },
+    async signInWithGoogle(redirectTo) {
+      const supabase = getSupabaseBrowserClient();
+      if (!supabase) {
+        return {
+          error: "Supabase is not configured. Add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY.",
+        };
+      }
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: { redirectTo },
       });
       return { error: error?.message ?? null };
     },

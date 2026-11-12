@@ -1,8 +1,15 @@
 import { track } from "@/lib/analytics";
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { Link, useRouter } from "@tanstack/react-router";
 import { useAuth } from "@/lib/auth";
 import { isSafeNextPath } from "@/lib/safe-redirect";
+import { PasswordInput } from "@/components/ui/password-input";
+import { PasswordRequirements } from "@/components/ui/password-requirements";
+import { isStrongPassword } from "@/lib/password";
+import { TurnstileWidget, type TurnstileWidgetHandle } from "@/components/ui/turnstile-widget";
+import { CAPTCHA_FAILED_MESSAGE, isCaptchaError, isTurnstileEnabled } from "@/lib/turnstile";
+import { GoogleIcon } from "@/components/site/sections/GoogleIcon";
+import { consumeOAuthPending, isNewAccount, markOAuthPending } from "@/lib/oauth-signup";
 
 type Mode = "login" | "signup";
 
@@ -12,7 +19,7 @@ interface AuthFormProps {
 }
 
 export function AuthForm({ initialMode = "login", nextPath = "/dashboard" }: AuthFormProps) {
-  const { configured, signIn, signUp, user, loading } = useAuth();
+  const { configured, signIn, signUp, signInWithGoogle, user, loading } = useAuth();
   const router = useRouter();
   const [mode, setMode] = useState<Mode>(initialMode);
   const [fullName, setFullName] = useState("");
@@ -21,14 +28,47 @@ export function AuthForm({ initialMode = "login", nextPath = "/dashboard" }: Aut
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const captchaRef = useRef<TurnstileWidgetHandle>(null);
+  const captchaRequired = isTurnstileEnabled();
+  // Keep sign-in actions disabled until Turnstile has issued a token.
+  const awaitingCaptcha = captchaRequired && !captchaToken;
 
   function goNext() {
     const target = isSafeNextPath(nextPath) ? nextPath : "/dashboard";
     void router.navigate({ href: target });
   }
 
+  // Supabase reports OAuth failures (e.g. the user cancelled) in the redirect URL.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const hash = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+    if (params.get("error") || hash.get("error")) {
+      consumeOAuthPending();
+      setError("Masuk dengan Google gagal atau dibatalkan. Silakan coba lagi.");
+    }
+  }, []);
+
+  async function handleGoogle() {
+    setError(null);
+    setInfo(null);
+    setSubmitting(true);
+    const target = isSafeNextPath(nextPath) ? nextPath : "/dashboard";
+    const redirectTo = `${window.location.origin}/login?next=${encodeURIComponent(target)}`;
+    markOAuthPending();
+    const result = await signInWithGoogle(redirectTo);
+    // On success the browser navigates away, so only reset on error.
+    if (result.error) {
+      setError(result.error);
+      setSubmitting(false);
+    }
+  }
+
   useEffect(() => {
     if (!loading && user) {
+      if (consumeOAuthPending() && isNewAccount(user)) {
+        track("signup", { source: "google" });
+      }
       goNext();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- only redirect on auth settle
@@ -38,28 +78,41 @@ export function AuthForm({ initialMode = "login", nextPath = "/dashboard" }: Aut
     event.preventDefault();
     setError(null);
     setInfo(null);
+    if (captchaRequired && !captchaToken) {
+      setError("Selesaikan verifikasi keamanan terlebih dahulu.");
+      return;
+    }
     setSubmitting(true);
+    const token = captchaToken ?? undefined;
 
     try {
       if (mode === "login") {
-        const result = await signIn(email, password);
+        const result = await signIn(email, password, token);
         if (result.error) {
-          setError(result.error);
+          setError(isCaptchaError(result.error) ? CAPTCHA_FAILED_MESSAGE : result.error);
           return;
         }
         goNext();
         return;
       }
 
-      const result = await signUp(email, password, fullName.trim());
-      if (result.error) {
-        setError(result.error);
+      if (!isStrongPassword(password)) {
+        setError(
+          "Kata sandi belum cukup kuat. Penuhi semua syarat di bawah kolom kata sandi.",
+        );
         return;
       }
-      track("signup");
+      const result = await signUp(email, password, fullName.trim(), token);
+      if (result.error) {
+        setError(isCaptchaError(result.error) ? CAPTCHA_FAILED_MESSAGE : result.error);
+        return;
+      }
+      track("signup", { source: "email" });
       setInfo("Akun berhasil dibuat. Jika diminta, buka email untuk konfirmasi, lalu masuk.");
       setMode("login");
     } finally {
+      // Turnstile tokens are single-use, so get a fresh one for the next attempt.
+      if (captchaRequired) captchaRef.current?.reset();
       setSubmitting(false);
     }
   }
@@ -123,6 +176,27 @@ export function AuthForm({ initialMode = "login", nextPath = "/dashboard" }: Aut
           </button>
         </div>
 
+        <button
+          type="button"
+          onClick={() => void handleGoogle()}
+          disabled={submitting || !configured || awaitingCaptcha}
+          className="flex h-12 w-full items-center justify-center gap-3 rounded-2xl border border-border-subtle bg-surface-canvas px-4 font-label-btn text-label-btn text-charcoal transition-colors hover:bg-surface-container disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          <GoogleIcon className="size-5" />
+          {mode === "login" ? "Masuk dengan Google" : "Daftar dengan Google"}
+        </button>
+        {awaitingCaptcha && (
+          <p className="mt-2 text-center font-body-sm text-body-sm text-text-muted">
+            Selesaikan verifikasi keamanan di bawah untuk melanjutkan.
+          </p>
+        )}
+
+        <div className="my-6 flex items-center gap-3" aria-hidden="true">
+          <span className="h-px flex-1 bg-border-subtle" />
+          <span className="font-body-sm text-body-sm text-text-muted">atau dengan email</span>
+          <span className="h-px flex-1 bg-border-subtle" />
+        </div>
+
         <form onSubmit={handleSubmit} className="flex flex-col gap-5">
           {mode === "signup" && (
             <label className="flex flex-col gap-2">
@@ -157,16 +231,15 @@ export function AuthForm({ initialMode = "login", nextPath = "/dashboard" }: Aut
             <span className="font-body-sm text-body-sm font-semibold text-charcoal">
               Kata sandi
             </span>
-            <input
+            <PasswordInput
               required
-              type="password"
               autoComplete={mode === "login" ? "current-password" : "new-password"}
-              minLength={6}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="Minimal 6 karakter"
+              placeholder={mode === "login" ? "Kata sandi kamu" : "Buat kata sandi yang kuat"}
               className="h-12 rounded-2xl border border-border-subtle bg-surface-canvas px-4 font-body-md text-body-md text-charcoal outline-none placeholder:text-text-muted focus-visible:ring-2 focus-visible:ring-charcoal/20"
             />
+            {mode === "signup" && <PasswordRequirements password={password} className="mt-1" />}
             {mode === "login" && (
               <Link
                 to="/forgot-password"
@@ -176,6 +249,12 @@ export function AuthForm({ initialMode = "login", nextPath = "/dashboard" }: Aut
               </Link>
             )}
           </label>
+
+          <TurnstileWidget
+            ref={captchaRef}
+            action={mode === "login" ? "login" : "signup"}
+            onToken={setCaptchaToken}
+          />
 
           {error && (
             <p className="rounded-2xl bg-error-container px-4 py-3 font-body-sm text-body-sm text-on-error-container">
@@ -190,7 +269,7 @@ export function AuthForm({ initialMode = "login", nextPath = "/dashboard" }: Aut
 
           <button
             type="submit"
-            disabled={submitting || !configured}
+            disabled={submitting || !configured || awaitingCaptcha}
             className="inline-flex items-center justify-center gap-2 self-start rounded-full bg-electric-lime px-7 py-3.5 font-label-btn text-label-btn text-charcoal transition-transform hover:scale-[1.03] active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {submitting ? "Tunggu sebentar…" : mode === "login" ? "Masuk" : "Buat akun"}
