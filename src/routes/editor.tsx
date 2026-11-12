@@ -44,9 +44,7 @@ function EditorLayout() {
   }
 
   if (loading || !user) {
-    return (
-      <CenteredMessage title="Loading…" body="Checking your session." />
-    );
+    return <CenteredMessage title="Loading…" body="Checking your session." />;
   }
 
   return <Outlet />;

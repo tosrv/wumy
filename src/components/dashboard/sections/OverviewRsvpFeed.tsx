@@ -118,9 +118,7 @@ export function OverviewRsvpFeed({ rsvps, totalLabel }: OverviewRsvpFeedProps) {
                       </span>
                     </div>
                     <p className="mt-1 line-clamp-2 text-[13px] italic text-muted-foreground">
-                      {rsvp.message
-                        ? `“${rsvp.message}”`
-                        : "No message left."}
+                      {rsvp.message ? `“${rsvp.message}”` : "No message left."}
                     </p>
                   </div>
                 </div>

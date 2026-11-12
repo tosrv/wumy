@@ -9,11 +9,7 @@ interface PhoneMockupProps {
   screenClassName?: string;
 }
 
-export function PhoneMockup({
-  children,
-  className,
-  screenClassName,
-}: PhoneMockupProps) {
+export function PhoneMockup({ children, className, screenClassName }: PhoneMockupProps) {
   return (
     <div
       className={cn(
@@ -27,10 +23,7 @@ export function PhoneMockup({
           screenClassName,
         )}
       >
-        <div
-          className="pointer-events-none absolute inset-x-0 top-0 z-20"
-          aria-hidden="true"
-        >
+        <div className="pointer-events-none absolute inset-x-0 top-0 z-20" aria-hidden="true">
           <div className="relative flex h-12 items-center justify-between px-5 pt-1 text-[11px] font-semibold tracking-tight text-foreground">
             <span className="w-14 pl-1">9:41</span>
 

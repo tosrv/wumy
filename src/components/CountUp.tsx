@@ -44,8 +44,7 @@ export function CountUp({
     return () => cancelAnimationFrame(raf);
   }, [active, to, durationMs, decimals]);
 
-  const formatted =
-    decimals > 0 ? value.toFixed(decimals) : String(Math.round(value));
+  const formatted = decimals > 0 ? value.toFixed(decimals) : String(Math.round(value));
 
   return (
     <span className={className}>

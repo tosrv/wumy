@@ -16,10 +16,7 @@ import {
   GuestsFilters,
   type GuestStatusFilter,
 } from "@/components/dashboard/sections/GuestsFilters";
-import {
-  GuestsTable,
-  type GuestListItem,
-} from "@/components/dashboard/sections/GuestsTable";
+import { GuestsTable, type GuestListItem } from "@/components/dashboard/sections/GuestsTable";
 import {
   GuestsAddDialog,
   type NewGuestInput,
@@ -187,13 +184,9 @@ export function GuestsPage() {
           onAdd={openAdd}
         />
 
-        {loading && (
-          <p className="text-sm text-muted-foreground">Loading guests…</p>
-        )}
+        {loading && <p className="text-sm text-muted-foreground">Loading guests…</p>}
         {error && (
-          <p className="rounded-xl bg-destructive/10 px-4 py-3 text-sm text-destructive">
-            {error}
-          </p>
+          <p className="rounded-xl bg-destructive/10 px-4 py-3 text-sm text-destructive">{error}</p>
         )}
 
         <GuestsMetrics metrics={metrics} />
@@ -229,11 +222,7 @@ export function GuestsPage() {
         />
       </main>
 
-      <GuestsAddDialog
-        open={addOpen}
-        onOpenChange={setAddOpen}
-        onSave={handleSaveGuest}
-      />
+      <GuestsAddDialog open={addOpen} onOpenChange={setAddOpen} onSave={handleSaveGuest} />
     </div>
   );
 }

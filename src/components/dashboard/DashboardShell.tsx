@@ -16,11 +16,7 @@ import {
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth";
-import {
-  daysUntilWedding,
-  listMyInvitations,
-  type InvitationRow,
-} from "@/lib/invitations";
+import { daysUntilWedding, listMyInvitations, type InvitationRow } from "@/lib/invitations";
 import { useAppBreakpoint } from "@/hooks/use-app-breakpoint";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -52,11 +48,7 @@ import { Button } from "@/components/ui/button";
 const primaryNav: {
   label: string;
   shortLabel: string;
-  to:
-    | "/dashboard"
-    | "/dashboard/guests"
-    | "/dashboard/rsvp"
-    | "/dashboard/invitation";
+  to: "/dashboard" | "/dashboard/guests" | "/dashboard/rsvp" | "/dashboard/invitation";
   icon: ComponentType<{ className?: string }>;
   externalHint?: boolean;
 }[] = [
@@ -97,10 +89,7 @@ function isActivePath(pathname: string, to: string) {
     return pathname === "/dashboard" || pathname === "/dashboard/";
   }
   if (to === "/dashboard/invitation") {
-    return (
-      pathname.startsWith("/dashboard/invitation") ||
-      pathname.startsWith("/editor")
-    );
+    return pathname.startsWith("/dashboard/invitation") || pathname.startsWith("/editor");
   }
   return pathname === to || pathname.startsWith(`${to}/`);
 }
@@ -134,12 +123,7 @@ function AccountMenu({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>{trigger}</DropdownMenuTrigger>
-      <DropdownMenuContent
-        className="min-w-56 rounded-lg"
-        side={side}
-        align="end"
-        sideOffset={4}
-      >
+      <DropdownMenuContent className="min-w-56 rounded-lg" side={side} align="end" sideOffset={4}>
         <DropdownMenuLabel className="p-0 font-normal">
           <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
             <Avatar className="h-8 w-8 rounded-lg">
@@ -149,11 +133,7 @@ function AccountMenu({
             </Avatar>
             <div className="grid min-w-0 flex-1 text-left text-sm leading-tight">
               <span className="truncate font-semibold">{displayName}</span>
-              {email && (
-                <span className="truncate text-xs text-muted-foreground">
-                  {email}
-                </span>
-              )}
+              {email && <span className="truncate text-xs text-muted-foreground">{email}</span>}
             </div>
           </div>
         </DropdownMenuLabel>
@@ -215,11 +195,7 @@ function SidebarNavUser() {
               </Avatar>
               <div className="grid min-w-0 flex-1 text-left text-sm leading-tight">
                 <span className="truncate font-semibold">{displayName}</span>
-                {email && (
-                  <span className="truncate text-xs text-muted-foreground">
-                    {email}
-                  </span>
-                )}
+                {email && <span className="truncate text-xs text-muted-foreground">{email}</span>}
               </div>
               <ChevronsUpDown className="ml-auto size-4" />
             </SidebarMenuButton>
@@ -233,8 +209,7 @@ function SidebarNavUser() {
 function DesktopShell({ children }: { children: ReactNode }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { user, configured } = useAuth();
-  const [activeInvitation, setActiveInvitation] =
-    useState<InvitationRow | null>(null);
+  const [activeInvitation, setActiveInvitation] = useState<InvitationRow | null>(null);
 
   useEffect(() => {
     if (!user || !configured) return;
@@ -258,19 +233,14 @@ function DesktopShell({ children }: { children: ReactNode }) {
 
   return (
     <SidebarProvider defaultOpen className="h-svh overflow-hidden">
-      <Sidebar
-        collapsible="none"
-        className="h-svh border-r border-sidebar-border"
-      >
+      <Sidebar collapsible="none" className="h-svh border-r border-sidebar-border">
         <SidebarHeader className="gap-3 px-3 py-4">
           <SidebarMenu>
             <SidebarMenuItem>
               <SidebarMenuButton size="lg" asChild className="h-auto py-2">
                 <Link to="/dashboard">
                   <div className="grid min-w-0 flex-1 text-left leading-tight">
-                    <span className="font-display text-lg font-bold tracking-tight">
-                      WUMY
-                    </span>
+                    <span className="font-display text-lg font-bold tracking-tight">WUMY</span>
                     <span className="text-[11px] font-medium text-muted-foreground">
                       Wedding Space
                     </span>
@@ -309,10 +279,7 @@ function DesktopShell({ children }: { children: ReactNode }) {
                       <SidebarMenuButton
                         asChild
                         isActive={active}
-                        className={cn(
-                          "rounded-lg",
-                          active && "bg-secondary font-semibold",
-                        )}
+                        className={cn("rounded-lg", active && "bg-secondary font-semibold")}
                       >
                         <Link to={item.to}>
                           <item.icon />
@@ -344,13 +311,7 @@ function DesktopShell({ children }: { children: ReactNode }) {
   );
 }
 
-function TabletShell({
-  children,
-  title,
-}: {
-  children: ReactNode;
-  title?: string;
-}) {
+function TabletShell({ children, title }: { children: ReactNode; title?: string }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { displayName, initials } = useUserDisplay();
 
@@ -358,10 +319,7 @@ function TabletShell({
     <div className="flex min-h-screen flex-col bg-background">
       <header className="sticky top-0 z-20 border-b border-border bg-background">
         <div className="flex h-14 items-center justify-between gap-3 px-4">
-          <Link
-            to="/dashboard"
-            className="font-display text-lg font-bold tracking-tight"
-          >
+          <Link to="/dashboard" className="font-display text-lg font-bold tracking-tight">
             WUMY
           </Link>
           <nav className="flex items-center gap-1">
@@ -399,9 +357,7 @@ function TabletShell({
           />
         </div>
         {title && (
-          <p className="border-t border-border px-4 py-2 text-sm text-muted-foreground">
-            {title}
-          </p>
+          <p className="border-t border-border px-4 py-2 text-sm text-muted-foreground">{title}</p>
         )}
       </header>
       <div className="flex-1">{children}</div>
@@ -409,28 +365,17 @@ function TabletShell({
   );
 }
 
-function MobileShell({
-  children,
-  title,
-}: {
-  children: ReactNode;
-  title?: string;
-}) {
+function MobileShell({ children, title }: { children: ReactNode; title?: string }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { initials } = useUserDisplay();
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <header className="sticky top-0 z-20 flex h-12 items-center justify-between border-b border-border bg-background px-4">
-        <Link
-          to="/dashboard"
-          className="font-display text-base font-bold tracking-tight"
-        >
+        <Link to="/dashboard" className="font-display text-base font-bold tracking-tight">
           WUMY
         </Link>
-        {title && (
-          <p className="truncate text-sm text-muted-foreground">{title}</p>
-        )}
+        {title && <p className="truncate text-sm text-muted-foreground">{title}</p>}
       </header>
 
       <div className="flex-1 pb-20">{children}</div>
@@ -448,9 +393,7 @@ function MobileShell({
                     active ? "text-foreground" : "text-muted-foreground",
                   )}
                 >
-                  <item.icon
-                    className={cn("size-5", active && "text-foreground")}
-                  />
+                  <item.icon className={cn("size-5", active && "text-foreground")} />
                   <span>{item.shortLabel}</span>
                 </Link>
               </li>
