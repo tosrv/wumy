@@ -3,6 +3,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import { Link, useRouter } from "@tanstack/react-router";
 import { useAuth } from "@/lib/auth";
 import { isSafeNextPath } from "@/lib/safe-redirect";
+import { PasswordInput } from "@/components/ui/password-input";
 
 type Mode = "login" | "signup";
 
@@ -157,9 +158,8 @@ export function AuthForm({ initialMode = "login", nextPath = "/dashboard" }: Aut
             <span className="font-body-sm text-body-sm font-semibold text-charcoal">
               Kata sandi
             </span>
-            <input
+            <PasswordInput
               required
-              type="password"
               autoComplete={mode === "login" ? "current-password" : "new-password"}
               minLength={6}
               value={password}

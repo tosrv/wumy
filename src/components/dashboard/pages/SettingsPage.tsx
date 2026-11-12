@@ -6,6 +6,7 @@ import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { PasswordInput } from "@/components/ui/password-input";
 
 export function SettingsPage() {
   const { user, configured } = useAuth();
@@ -171,8 +172,8 @@ export function SettingsPage() {
               <Label className="mb-1.5 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
                 New password
               </Label>
-              <Input
-                type="password"
+              <PasswordInput
+                styled
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="At least 8 characters"
@@ -183,8 +184,8 @@ export function SettingsPage() {
               <Label className="mb-1.5 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
                 Confirm password
               </Label>
-              <Input
-                type="password"
+              <PasswordInput
+                styled
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 placeholder="Repeat new password"
