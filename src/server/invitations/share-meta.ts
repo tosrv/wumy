@@ -6,8 +6,8 @@ import { getSupabaseEnv } from "@/lib/supabase/client";
 import { parseContent } from "@/lib/invitation-content-io";
 import { isValidSlug } from "@/lib/slug";
 import { pickShareImage, type ShareMetaInput } from "@/lib/share-meta";
-
-const PHOTO_BUCKET = "invitation-photos";
+import { isR2Storage, storagePublicUrl } from "@/lib/storage";
+import { PHOTO_BUCKET } from "@/lib/storage-rules";
 
 /**
  * Data for the share preview of a published invitation, read on the server so the
@@ -46,7 +46,9 @@ export const getInvitationShareMeta = createServerFn({ method: "GET" })
         .order("sort_order", { ascending: true });
       const path = pickShareImage(photos ?? []);
       const image = path
-        ? supabase.storage.from(PHOTO_BUCKET).getPublicUrl(path).data.publicUrl
+        ? isR2Storage()
+          ? storagePublicUrl(PHOTO_BUCKET, path)
+          : supabase.storage.from(PHOTO_BUCKET).getPublicUrl(path).data.publicUrl
         : undefined;
 
       return {
