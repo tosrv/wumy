@@ -29,7 +29,7 @@ Public pages work without Supabase; login, `/order`, the dashboard, and the edit
 
 1. Create a new project at supabase.com.
 2. **SQL Editor** → run [`supabase/schema.sql`](supabase/schema.sql) once (full schema: tables, RLS, triggers, functions, storage bucket, template seed).
-3. **Authentication → Providers** → enable **Email**.
+3. **Authentication → Providers** → enable **Email**. Under **Password requirements**, set minimum length **8** and require **lowercase, uppercase, digits and symbols**, so the server enforces the same strong-password rules as the app (`src/lib/password.ts`).
 4. **Authentication → URL Configuration → Redirect URLs** → add `https://<domain>/reset-password` (and `http://localhost:5173/reset-password` for local).
 5. Optional: translate the *Reset Password* email template (keep `{{ .ConfirmationURL }}`).
 6. Google sign-in:

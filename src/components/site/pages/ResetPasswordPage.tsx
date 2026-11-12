@@ -2,6 +2,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import { Link, useRouter } from "@tanstack/react-router";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import { newPasswordIssue } from "@/lib/password";
+import { PasswordRequirements } from "@/components/ui/password-requirements";
 import { PasswordInput } from "@/components/ui/password-input";
 
 const inputClass =
@@ -113,9 +114,10 @@ export function ResetPasswordPage() {
                   autoComplete="new-password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Minimal 8 karakter"
+                  placeholder="Buat kata sandi yang kuat"
                   className={inputClass}
                 />
+                <PasswordRequirements password={password} className="mt-1" />
               </label>
               <label className="flex flex-col gap-2">
                 <span className="font-body-sm text-body-sm font-semibold text-charcoal">
