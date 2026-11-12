@@ -36,6 +36,10 @@ Public pages work without Supabase; login, `/order`, the dashboard, and the edit
    - In Google Cloud Console → APIs & Services → Credentials, create an **OAuth client ID** (Web application) with the Supabase callback URL `https://<project-ref>.supabase.co/auth/v1/callback` as an authorized redirect URI.
    - **Authentication → Providers → Google** → enable it and paste the Client ID and Client Secret.
    - **Authentication → URL Configuration → Redirect URLs** → add `https://<domain>/login**` (and `http://localhost:5173/login**` for local). The `**` lets the `?next=` query through.
+7. CAPTCHA (Cloudflare Turnstile):
+   - In the Cloudflare dashboard → **Turnstile** → add a widget (Managed mode) for your domains (e.g. `wumy.my.id`, `dev.wumy.my.id`, `localhost`). Copy the **Site Key** and **Secret Key**.
+   - **Authentication → Attack Protection** → enable **CAPTCHA protection**, choose **Turnstile**, and paste the Secret Key.
+   - Set `VITE_TURNSTILE_SITE_KEY` to the Site Key and redeploy. Set it before (or together with) enabling CAPTCHA in Supabase: once Supabase requires CAPTCHA, email login, sign-up, and password reset fail without a token.
 
 Key rules enforced by the database:
 - An invitation can only go live when `payment_status = 'paid'`; payment status is changed only by the server (`mark_invitation_paid`, service role).
@@ -54,6 +58,7 @@ To skip payment in the **development** project, run [`supabase/dev/mark_paid.sql
 | `DOKU_API_BASE` | payments | `https://api-sandbox.doku.com` or `https://api.doku.com` |
 | `PUBLISH_PRICE_IDR` | no | Override the price (rupiah, ≥ 1000). Default Rp 99,000 |
 | `VITE_POSTHOG_KEY`, `VITE_POSTHOG_HOST` | no | PostHog analytics; empty = disabled |
+| `VITE_TURNSTILE_SITE_KEY` | no | Cloudflare Turnstile site key (public). Empty = no CAPTCHA widget. Must be set if Supabase CAPTCHA protection is on |
 
 Never give secret variables a `VITE_` prefix. Redeploy on Vercel after changing env vars. Without a complete DOKU configuration, `/order` shows "Pembayaran online segera hadir" ("Online payment coming soon").
 
