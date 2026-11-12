@@ -2,6 +2,7 @@ import "./lib/error-capture";
 
 import { consumeLastCapturedError } from "./lib/error-capture";
 import { renderErrorPage } from "./lib/error-page";
+import { withSecurityHeaders } from "./server/security-headers";
 import { stagingGate, withStagingHeaders } from "./server/staging/gate";
 
 type ServerEntry = {
@@ -50,17 +51,21 @@ export default {
     // Staging lock: only active where STAGING_PASSWORD is set (Vercel Preview / dev branch).
     const stagingPassword = process.env["STAGING_PASSWORD"];
     const blocked = stagingGate(request, stagingPassword);
-    if (blocked) return blocked;
+    if (blocked) return withSecurityHeaders(blocked);
     try {
       const handler = await getServerEntry();
       const response = await handler.fetch(request, env, ctx);
-      return withStagingHeaders(await normalizeCatastrophicSsrResponse(response), stagingPassword);
+      return withSecurityHeaders(
+        withStagingHeaders(await normalizeCatastrophicSsrResponse(response), stagingPassword),
+      );
     } catch (error) {
       console.error(error);
-      return new Response(renderErrorPage(), {
-        status: 500,
-        headers: { "content-type": "text/html; charset=utf-8" },
-      });
+      return withSecurityHeaders(
+        new Response(renderErrorPage(), {
+          status: 500,
+          headers: { "content-type": "text/html; charset=utf-8" },
+        }),
+      );
     }
   },
 };
