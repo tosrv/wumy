@@ -22,6 +22,8 @@ type AuthContextValue = {
     password: string,
     fullName: string,
   ) => Promise<{ error: string | null }>;
+  /** Redirects to Google; on return the session is picked up from the URL. */
+  signInWithGoogle: (redirectTo: string) => Promise<{ error: string | null }>;
   signOut: () => Promise<void>;
 };
 
@@ -98,6 +100,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         options: {
           data: { full_name: fullName },
         },
+      });
+      return { error: error?.message ?? null };
+    },
+    async signInWithGoogle(redirectTo) {
+      const supabase = getSupabaseBrowserClient();
+      if (!supabase) {
+        return {
+          error: "Supabase is not configured. Add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY.",
+        };
+      }
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: { redirectTo },
       });
       return { error: error?.message ?? null };
     },

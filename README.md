@@ -32,6 +32,10 @@ Public pages work without Supabase; login, `/order`, the dashboard, and the edit
 3. **Authentication → Providers** → enable **Email**.
 4. **Authentication → URL Configuration → Redirect URLs** → add `https://<domain>/reset-password` (and `http://localhost:5173/reset-password` for local).
 5. Optional: translate the *Reset Password* email template (keep `{{ .ConfirmationURL }}`).
+6. Google sign-in:
+   - In Google Cloud Console → APIs & Services → Credentials, create an **OAuth client ID** (Web application) with the Supabase callback URL `https://<project-ref>.supabase.co/auth/v1/callback` as an authorized redirect URI.
+   - **Authentication → Providers → Google** → enable it and paste the Client ID and Client Secret.
+   - **Authentication → URL Configuration → Redirect URLs** → add `https://<domain>/login**` (and `http://localhost:5173/login**` for local). The `**` lets the `?next=` query through.
 
 Key rules enforced by the database:
 - An invitation can only go live when `payment_status = 'paid'`; payment status is changed only by the server (`mark_invitation_paid`, service role).
