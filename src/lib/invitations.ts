@@ -2,6 +2,7 @@ import { exceedsPhotoCap } from "@/lib/photo-slots";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import { storagePublicUrl, storageRemove, storageUpload } from "@/lib/storage";
 import { BUCKET_RULES, PHOTO_BUCKET } from "@/lib/storage-rules";
+import { compressPhoto } from "@/lib/image-compress";
 import type { Database } from "@/lib/supabase/database.types";
 import { legacyColumnsFromContent, parseContent } from "@/lib/invitation-content-io";
 import {
@@ -33,7 +34,10 @@ export type WeddingDetailsInput = {
 };
 
 export const MAX_INVITATION_PHOTOS = 6;
+/** Stored size limit (after compression). */
 export const MAX_PHOTO_BYTES = BUCKET_RULES[PHOTO_BUCKET].maxBytes;
+/** Largest file a user may pick; it is compressed below MAX_PHOTO_BYTES before upload. */
+export const MAX_PHOTO_INPUT_BYTES = 20 * 1024 * 1024;
 
 export function slugifyCouple(partnerA: string, partnerB: string): string {
   const raw = [partnerA, partnerB]
@@ -274,9 +278,12 @@ export async function uploadInvitationPhotos(
     throw new Error(`You can upload up to ${MAX_INVITATION_PHOTOS} photos.`);
   }
 
-  const tooBig = files.find((file) => file.size > MAX_PHOTO_BYTES);
-  if (tooBig) {
-    throw new Error("Each photo must be under 5MB.");
+  if (files.some((file) => file.size > MAX_PHOTO_INPUT_BYTES)) {
+    throw new Error("Each photo must be under 20MB.");
+  }
+  files = await Promise.all(files.map(compressPhoto));
+  if (files.some((file) => file.size > MAX_PHOTO_BYTES)) {
+    throw new Error("Photo is still too large after compression. Try a smaller photo.");
   }
 
   const startOrder = existing.reduce((max, photo) => Math.max(max, photo.sort_order), -1) + 1;
@@ -352,7 +359,11 @@ export async function replaceInvitationPhotoFile(
 ): Promise<InvitationPhotoRow> {
   const supabase = getSupabaseBrowserClient();
   if (!supabase) throw new Error("Supabase is not configured.");
-  if (file.size > MAX_PHOTO_BYTES) throw new Error("Each photo must be under 5MB.");
+  if (file.size > MAX_PHOTO_INPUT_BYTES) throw new Error("Each photo must be under 20MB.");
+  file = await compressPhoto(file);
+  if (file.size > MAX_PHOTO_BYTES) {
+    throw new Error("Photo is still too large after compression. Try a smaller photo.");
+  }
 
   const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_").slice(0, 80);
   const newPath = `${ownerId}/${invitationId}/${Date.now()}-0-${safeName}`;

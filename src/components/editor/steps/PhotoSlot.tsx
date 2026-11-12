@@ -2,7 +2,7 @@ import { useState } from "react";
 import { ImagePlus } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import {
-  MAX_PHOTO_BYTES,
+  MAX_PHOTO_INPUT_BYTES,
   publicPhotoUrl,
   replaceInvitationPhotoFile,
   uploadInvitationPhotos,
@@ -44,7 +44,7 @@ export function PhotoSlot({
       setError(t(locale, "photoUploadFailed"));
       return;
     }
-    if (file.size > MAX_PHOTO_BYTES) {
+    if (file.size > MAX_PHOTO_INPUT_BYTES) {
       setError(t(locale, "photoTooLarge"));
       return;
     }
