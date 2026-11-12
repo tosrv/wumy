@@ -5,6 +5,7 @@ import { useAuth } from "@/lib/auth";
 import { isSafeNextPath } from "@/lib/safe-redirect";
 import { PasswordInput } from "@/components/ui/password-input";
 import { GoogleIcon } from "@/components/site/sections/GoogleIcon";
+import { consumeOAuthPending, isNewAccount, markOAuthPending } from "@/lib/oauth-signup";
 
 type Mode = "login" | "signup";
 
@@ -34,6 +35,7 @@ export function AuthForm({ initialMode = "login", nextPath = "/dashboard" }: Aut
     const params = new URLSearchParams(window.location.search);
     const hash = new URLSearchParams(window.location.hash.replace(/^#/, ""));
     if (params.get("error") || hash.get("error")) {
+      consumeOAuthPending();
       setError("Masuk dengan Google gagal atau dibatalkan. Silakan coba lagi.");
     }
   }, []);
@@ -44,6 +46,7 @@ export function AuthForm({ initialMode = "login", nextPath = "/dashboard" }: Aut
     setSubmitting(true);
     const target = isSafeNextPath(nextPath) ? nextPath : "/dashboard";
     const redirectTo = `${window.location.origin}/login?next=${encodeURIComponent(target)}`;
+    markOAuthPending();
     const result = await signInWithGoogle(redirectTo);
     // On success the browser navigates away, so only reset on error.
     if (result.error) {
@@ -54,6 +57,9 @@ export function AuthForm({ initialMode = "login", nextPath = "/dashboard" }: Aut
 
   useEffect(() => {
     if (!loading && user) {
+      if (consumeOAuthPending() && isNewAccount(user)) {
+        track("signup", { source: "google" });
+      }
       goNext();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- only redirect on auth settle
@@ -81,7 +87,7 @@ export function AuthForm({ initialMode = "login", nextPath = "/dashboard" }: Aut
         setError(result.error);
         return;
       }
-      track("signup");
+      track("signup", { source: "email" });
       setInfo("Akun berhasil dibuat. Jika diminta, buka email untuk konfirmasi, lalu masuk.");
       setMode("login");
     } finally {
