@@ -31,6 +31,8 @@ export function AuthForm({ initialMode = "login", nextPath = "/dashboard" }: Aut
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const captchaRef = useRef<TurnstileWidgetHandle>(null);
   const captchaRequired = isTurnstileEnabled();
+  // Keep sign-in actions disabled until Turnstile has issued a token.
+  const awaitingCaptcha = captchaRequired && !captchaToken;
 
   function goNext() {
     const target = isSafeNextPath(nextPath) ? nextPath : "/dashboard";
@@ -177,12 +179,17 @@ export function AuthForm({ initialMode = "login", nextPath = "/dashboard" }: Aut
         <button
           type="button"
           onClick={() => void handleGoogle()}
-          disabled={submitting || !configured}
+          disabled={submitting || !configured || awaitingCaptcha}
           className="flex h-12 w-full items-center justify-center gap-3 rounded-2xl border border-border-subtle bg-surface-canvas px-4 font-label-btn text-label-btn text-charcoal transition-colors hover:bg-surface-container disabled:cursor-not-allowed disabled:opacity-50"
         >
           <GoogleIcon className="size-5" />
           {mode === "login" ? "Masuk dengan Google" : "Daftar dengan Google"}
         </button>
+        {awaitingCaptcha && (
+          <p className="mt-2 text-center font-body-sm text-body-sm text-text-muted">
+            Selesaikan verifikasi keamanan di bawah untuk melanjutkan.
+          </p>
+        )}
 
         <div className="my-6 flex items-center gap-3" aria-hidden="true">
           <span className="h-px flex-1 bg-border-subtle" />
@@ -262,7 +269,7 @@ export function AuthForm({ initialMode = "login", nextPath = "/dashboard" }: Aut
 
           <button
             type="submit"
-            disabled={submitting || !configured}
+            disabled={submitting || !configured || awaitingCaptcha}
             className="inline-flex items-center justify-center gap-2 self-start rounded-full bg-electric-lime px-7 py-3.5 font-label-btn text-label-btn text-charcoal transition-transform hover:scale-[1.03] active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {submitting ? "Tunggu sebentar…" : mode === "login" ? "Masuk" : "Buat akun"}
