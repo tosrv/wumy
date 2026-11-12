@@ -4,6 +4,8 @@ import { Link, useRouter } from "@tanstack/react-router";
 import { useAuth } from "@/lib/auth";
 import { isSafeNextPath } from "@/lib/safe-redirect";
 import { PasswordInput } from "@/components/ui/password-input";
+import { PasswordRequirements } from "@/components/ui/password-requirements";
+import { isStrongPassword } from "@/lib/password";
 import { GoogleIcon } from "@/components/site/sections/GoogleIcon";
 import { consumeOAuthPending, isNewAccount, markOAuthPending } from "@/lib/oauth-signup";
 
@@ -82,6 +84,12 @@ export function AuthForm({ initialMode = "login", nextPath = "/dashboard" }: Aut
         return;
       }
 
+      if (!isStrongPassword(password)) {
+        setError(
+          "Kata sandi belum cukup kuat. Penuhi semua syarat di bawah kolom kata sandi.",
+        );
+        return;
+      }
       const result = await signUp(email, password, fullName.trim());
       if (result.error) {
         setError(result.error);
@@ -207,12 +215,12 @@ export function AuthForm({ initialMode = "login", nextPath = "/dashboard" }: Aut
             <PasswordInput
               required
               autoComplete={mode === "login" ? "current-password" : "new-password"}
-              minLength={6}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="Minimal 6 karakter"
+              placeholder={mode === "login" ? "Kata sandi kamu" : "Buat kata sandi yang kuat"}
               className="h-12 rounded-2xl border border-border-subtle bg-surface-canvas px-4 font-body-md text-body-md text-charcoal outline-none placeholder:text-text-muted focus-visible:ring-2 focus-visible:ring-charcoal/20"
             />
+            {mode === "signup" && <PasswordRequirements password={password} className="mt-1" />}
             {mode === "login" && (
               <Link
                 to="/forgot-password"
