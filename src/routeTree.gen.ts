@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SlugRouteImport } from './routes/$slug'
 import { Route as SiteRouteImport } from './routes/_site'
+import { Route as AdminRouteImport } from './routes/admin'
 import { Route as CreateRouteImport } from './routes/create'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as EditorRouteImport } from './routes/editor'
@@ -49,6 +50,11 @@ const SlugRoute = SlugRouteImport.update({
 } as any)
 const SiteRoute = SiteRouteImport.update({
   id: '/_site',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminRoute = AdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CreateRoute = CreateRouteImport.update({
@@ -207,6 +213,7 @@ const DashboardInvitationInvitationIdRoute =
 export interface FileRoutesByFullPath {
   '/$slug': typeof SlugRoute
   '/': typeof SiteIndexRoute
+  '/admin': typeof AdminRoute
   '/create': typeof CreateRoute
   '/dashboard': typeof DashboardRouteWithChildren
   '/editor': typeof EditorRouteWithChildren
@@ -239,6 +246,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/$slug': typeof SlugRoute
+  '/admin': typeof AdminRoute
   '/create': typeof CreateRoute
   '/order': typeof OrderRoute
   '/about': typeof SiteAboutRoute
@@ -271,6 +279,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/$slug': typeof SlugRoute
   '/_site': typeof SiteRouteWithChildren
+  '/admin': typeof AdminRoute
   '/create': typeof CreateRoute
   '/dashboard': typeof DashboardRouteWithChildren
   '/editor': typeof EditorRouteWithChildren
@@ -307,6 +316,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/$slug'
     | '/'
+    | '/admin'
     | '/create'
     | '/dashboard'
     | '/editor'
@@ -339,6 +349,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/$slug'
+    | '/admin'
     | '/create'
     | '/order'
     | '/about'
@@ -370,6 +381,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/$slug'
     | '/_site'
+    | '/admin'
     | '/create'
     | '/dashboard'
     | '/editor'
@@ -405,6 +417,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   SlugRoute: typeof SlugRoute
   SiteRoute: typeof SiteRouteWithChildren
+  AdminRoute: typeof AdminRoute
   CreateRoute: typeof CreateRoute
   DashboardRoute: typeof DashboardRouteWithChildren
   EditorRoute: typeof EditorRouteWithChildren
@@ -429,6 +442,13 @@ declare module '@tanstack/react-router' {
       path: ''
       fullPath: '/'
       preLoaderRoute: typeof SiteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/create': {
@@ -727,6 +747,7 @@ const EditorRouteWithChildren =
 const rootRouteChildren: RootRouteChildren = {
   SlugRoute: SlugRoute,
   SiteRoute: SiteRouteWithChildren,
+  AdminRoute: AdminRoute,
   CreateRoute: CreateRoute,
   DashboardRoute: DashboardRouteWithChildren,
   EditorRoute: EditorRouteWithChildren,

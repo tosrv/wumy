@@ -33,6 +33,7 @@ Before committing, run `npx tsc --noEmit`, `npm test`, and `npm run lint` (0 err
   - `dashboard.*`, `editor.*`, `order.tsx`, `payment.status.tsx`: signed-in area.
   - `$slug.tsx`: public invitation page.
   - `api/webhooks/doku.ts`: DOKU payment webhook.
+  - `admin.tsx`: admin page. Every admin action is a server function in `src/server/admin/` that checks `admin_users` first; write state-changing actions to `admin_audit_log`.
 - `src/components/`: `ui/` (shadcn + shared components, e.g. `password-input.tsx`), `site/`, `dashboard/`, `editor/`, `invitations/`, `order/`, `payments/`.
 - `src/lib/`: shared logic + unit tests (`*.test.ts` next to the source file).
 - `src/server/`: server-only code (payments, R2 storage, staging gate, security headers, share meta). `src/server.ts` wraps every response with `withSecurityHeaders`; if a new feature needs to be framed or use camera/mic/location, update `src/server/security-headers.ts`.
