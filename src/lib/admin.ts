@@ -6,6 +6,7 @@ import {
   adminListPayments,
   adminCreateInvitationForClient,
   adminMarkInvitationPaid,
+  adminSetClientPassword,
   getAdminStatus,
 } from "@/server/admin/functions";
 import type { PaymentStatus } from "@/lib/supabase/database.types";
@@ -78,4 +79,30 @@ export async function createInvitationForClient(input: {
   note: string;
 }) {
   return adminCreateInvitationForClient({ data: { accessToken: await requireToken(), ...input } });
+}
+
+export async function setClientPasswordAsAdmin(invitationId: string, password: string) {
+  return adminSetClientPassword({
+    data: { accessToken: await requireToken(), invitationId, password },
+  });
+}
+
+/** A random password that meets the strong-password rules (16 chars, all character kinds). */
+export function generateStrongPassword(): string {
+  const sets = ["ABCDEFGHJKLMNPQRSTUVWXYZ", "abcdefghijkmnpqrstuvwxyz", "23456789", "!@#$%^&*?-_"];
+  const all = sets.join("");
+  const pick = (chars: string) => {
+    const buf = new Uint32Array(1);
+    crypto.getRandomValues(buf);
+    return chars[buf[0]! % chars.length]!;
+  };
+  const chars = [...sets.map(pick), ...Array.from({ length: 12 }, () => pick(all))];
+  // Shuffle so the guaranteed characters aren't always first.
+  for (let i = chars.length - 1; i > 0; i--) {
+    const buf = new Uint32Array(1);
+    crypto.getRandomValues(buf);
+    const j = buf[0]! % (i + 1);
+    [chars[i], chars[j]] = [chars[j]!, chars[i]!];
+  }
+  return chars.join("");
 }
