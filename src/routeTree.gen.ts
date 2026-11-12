@@ -31,6 +31,7 @@ import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as AdminActivityRouteImport } from './routes/admin.activity'
 import { Route as AdminInvitationsRouteImport } from './routes/admin.invitations'
 import { Route as AdminPaymentsRouteImport } from './routes/admin.payments'
+import { Route as AdminSettingsRouteImport } from './routes/admin.settings'
 import { Route as DashboardIndexRouteImport } from './routes/dashboard.index'
 import { Route as DashboardBillingRouteImport } from './routes/dashboard.billing'
 import { Route as DashboardGuestsRouteImport } from './routes/dashboard.guests'
@@ -156,6 +157,11 @@ const AdminPaymentsRoute = AdminPaymentsRouteImport.update({
   path: '/payments',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminSettingsRoute = AdminSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => AdminRoute,
+} as any)
 const DashboardIndexRoute = DashboardIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -255,6 +261,7 @@ export interface FileRoutesByFullPath {
   '/admin/activity': typeof AdminActivityRoute
   '/admin/invitations': typeof AdminInvitationsRoute
   '/admin/payments': typeof AdminPaymentsRoute
+  '/admin/settings': typeof AdminSettingsRoute
   '/dashboard/billing': typeof DashboardBillingRoute
   '/dashboard/guests': typeof DashboardGuestsRoute
   '/dashboard/help': typeof DashboardHelpRoute
@@ -289,6 +296,7 @@ export interface FileRoutesByTo {
   '/admin/activity': typeof AdminActivityRoute
   '/admin/invitations': typeof AdminInvitationsRoute
   '/admin/payments': typeof AdminPaymentsRoute
+  '/admin/settings': typeof AdminSettingsRoute
   '/dashboard/billing': typeof DashboardBillingRoute
   '/dashboard/guests': typeof DashboardGuestsRoute
   '/dashboard/help': typeof DashboardHelpRoute
@@ -328,6 +336,7 @@ export interface FileRoutesById {
   '/admin/activity': typeof AdminActivityRoute
   '/admin/invitations': typeof AdminInvitationsRoute
   '/admin/payments': typeof AdminPaymentsRoute
+  '/admin/settings': typeof AdminSettingsRoute
   '/dashboard/billing': typeof DashboardBillingRoute
   '/dashboard/guests': typeof DashboardGuestsRoute
   '/dashboard/help': typeof DashboardHelpRoute
@@ -369,6 +378,7 @@ export interface FileRouteTypes {
     | '/admin/activity'
     | '/admin/invitations'
     | '/admin/payments'
+    | '/admin/settings'
     | '/dashboard/billing'
     | '/dashboard/guests'
     | '/dashboard/help'
@@ -403,6 +413,7 @@ export interface FileRouteTypes {
     | '/admin/activity'
     | '/admin/invitations'
     | '/admin/payments'
+    | '/admin/settings'
     | '/dashboard/billing'
     | '/dashboard/guests'
     | '/dashboard/help'
@@ -441,6 +452,7 @@ export interface FileRouteTypes {
     | '/admin/activity'
     | '/admin/invitations'
     | '/admin/payments'
+    | '/admin/settings'
     | '/dashboard/billing'
     | '/dashboard/guests'
     | '/dashboard/help'
@@ -630,6 +642,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminPaymentsRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/settings': {
+      id: '/admin/settings'
+      path: '/settings'
+      fullPath: '/admin/settings'
+      preLoaderRoute: typeof AdminSettingsRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/dashboard/': {
       id: '/dashboard/'
       path: '/'
@@ -772,6 +791,7 @@ interface AdminRouteChildren {
   AdminActivityRoute: typeof AdminActivityRoute
   AdminInvitationsRoute: typeof AdminInvitationsRoute
   AdminPaymentsRoute: typeof AdminPaymentsRoute
+  AdminSettingsRoute: typeof AdminSettingsRoute
   AdminIndexRoute: typeof AdminIndexRoute
 }
 
@@ -779,6 +799,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminActivityRoute: AdminActivityRoute,
   AdminInvitationsRoute: AdminInvitationsRoute,
   AdminPaymentsRoute: AdminPaymentsRoute,
+  AdminSettingsRoute: AdminSettingsRoute,
   AdminIndexRoute: AdminIndexRoute,
 }
 

@@ -1,6 +1,15 @@
 import { useEffect, useState, type ComponentType, type ReactNode } from "react";
 import { Link, useRouter, useRouterState } from "@tanstack/react-router";
-import { ChevronsUpDown, CreditCard, History, LogOut, Mail, Menu, ShieldCheck } from "lucide-react";
+import {
+  ChevronsUpDown,
+  CreditCard,
+  History,
+  LogOut,
+  Mail,
+  Menu,
+  Settings,
+  ShieldCheck,
+} from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { useAppBreakpoint } from "@/hooks/use-app-breakpoint";
 import { cn } from "@/lib/utils";
@@ -32,12 +41,13 @@ import {
 
 const adminNav: {
   label: string;
-  to: "/admin/invitations" | "/admin/payments" | "/admin/activity";
+  to: "/admin/invitations" | "/admin/payments" | "/admin/activity" | "/admin/settings";
   icon: ComponentType<{ className?: string }>;
 }[] = [
   { label: "Invitations", to: "/admin/invitations", icon: Mail },
   { label: "Payments", to: "/admin/payments", icon: CreditCard },
   { label: "Activity", to: "/admin/activity", icon: History },
+  { label: "Settings", to: "/admin/settings", icon: Settings },
 ];
 
 function isActivePath(pathname: string, to: string) {
@@ -80,6 +90,12 @@ function AccountMenu({
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
+        <DropdownMenuItem asChild>
+          <Link to="/admin/settings">
+            <Settings />
+            Settings
+          </Link>
+        </DropdownMenuItem>
         <DropdownMenuItem
           onClick={() => {
             void (async () => {
@@ -251,7 +267,7 @@ function MobileShell({ children }: { children: ReactNode }) {
       <div className="flex-1 pb-20">{children}</div>
 
       <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/80">
-        <ul className="mx-auto grid h-16 max-w-lg grid-cols-4 px-1">
+        <ul className="mx-auto grid h-16 max-w-lg grid-cols-5 px-1">
           {adminNav.map((item) => {
             const active = isActivePath(pathname, item.to);
             return (
