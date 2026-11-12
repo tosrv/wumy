@@ -4,7 +4,7 @@ Digital wedding invitations: public site, ordering + DOKU payments, editor, and 
 
 **Stack:** TanStack Start (React, SSR) on Vercel · Supabase (Postgres, Auth, Storage) · DOKU Checkout · PostHog (optional).
 
-**Customer flow:** template → demo → *Gunakan template ini* ("Use this template") → sign up/sign in → `/order` (pay) → editor → *Terbitkan* ("Publish") → share `/<slug>`.
+**Customer flow:** template → demo → *Gunakan template ini* ("Use this template") → sign up/sign in → `/order` (pay) → editor → *Terbitkan* ("Publish") → share `/<slug>`. Opening `/order` (e.g. *Create invitation* on the dashboard) without a chosen template and without an existing invitation sends the user to the catalog (`/product`) first. The template is fixed once ordered; only an admin can change it.
 
 ## Running locally
 
@@ -119,6 +119,7 @@ Admins can list invitations and payments, mark an invitation as paid without a D
 - **Create for client** (Invitations page) sets up an invitation for a client who asked you to, or a free/promo one:
   - If the email has no account yet, it is created right away with the password you set (or **Generate**), with the email marked confirmed. **No email is sent**; share the login with the client privately. An existing account is reused and keeps its password, unless it already has an invitation or is an admin.
   - Creates a draft invitation (slug from the couple's names), optionally marks it paid, and logs both steps (never the password). The client fills it in and presses **Terbitkan**.
+- **Change template** (row menu ⋯) switches a client's invitation to another template. Only the look changes; names, events, photos, and texts stay, and a published invitation switches right away. Logged as `change_template` (from/to). Customers can't change the template in the editor; they pick it from the catalog before paying.
 - **Set password** (row menu ⋯ on Invitations) sets a new password for the invitation's owner directly, for a client who can't use the reset email. It must meet the strong-password rules (there is a **Generate** button). The old password stops working immediately; the new one is never written to the activity log, only that it was changed. Admin accounts are refused. Share the password with the client privately and ask them to change it in **Settings**.
 - Requires `SUPABASE_SERVICE_ROLE_KEY` on the server.
 

@@ -20,7 +20,6 @@ export function stepStates(
 ): Record<EditorStepId, StepState> {
   const blocked = new Set(ctx.issues.map((i) => i.step));
   const filled: Record<EditorStepId, boolean> = {
-    template: hasText(v.templateId),
     partners: Boolean(partnerName(v.partners.a) && partnerName(v.partners.b)),
     events: v.events.length > 0,
     gallery: ctx.galleryCount > 0 || hasText(v.story),
@@ -62,8 +61,6 @@ export function stepSummary(
 ): string {
   const c = COPY[ctx.locale];
   switch (id) {
-    case "template":
-      return ctx.templateName ?? c.empty;
     case "partners": {
       const a = partnerName(v.partners.a);
       const b = partnerName(v.partners.b);

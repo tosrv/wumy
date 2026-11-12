@@ -1,4 +1,4 @@
-import { getTemplateById, invitationTemplates } from "@/data/templates";
+import { getTemplateById } from "@/data/templates";
 import {
   createDraftInvitation,
   isSlugAvailable,
@@ -24,7 +24,10 @@ async function uniqueDraftSlug(): Promise<string> {
  * The draft invitation row is the order. One account → one invitation:
  * reuse it (switching template while unpaid) or create a fresh draft.
  */
-type OrderResult = { invitation: InvitationRow; redirectToEditor: boolean };
+type OrderResult =
+  | { invitation: InvitationRow; redirectToEditor: boolean; needsTemplate?: false }
+  /** No invitation yet and no (valid) template chosen: send the user to the catalog first. */
+  | { needsTemplate: true };
 
 const inFlight = new Map<string, Promise<OrderResult>>();
 
@@ -60,7 +63,8 @@ async function runEnsureOrderInvitation(userId: string, templateId?: string): Pr
     return { invitation: existing, redirectToEditor: false };
   }
 
-  const template = getTemplateById(templateId) ?? invitationTemplates[0]!;
+  const template = getTemplateById(templateId);
+  if (!template) return { needsTemplate: true };
   const slug = await uniqueDraftSlug();
   let invitation: InvitationRow;
   try {

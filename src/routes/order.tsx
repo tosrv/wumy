@@ -61,8 +61,14 @@ function OrderRoute() {
     let cancelled = false;
     setError(null);
     ensureOrderInvitation(user.id, template)
-      .then(({ invitation: inv, redirectToEditor }) => {
+      .then((result) => {
         if (cancelled) return;
+        if (result.needsTemplate) {
+          // Nothing ordered yet and no template chosen: pick one from the catalog first.
+          void router.navigate({ to: "/product", replace: true });
+          return;
+        }
+        const { invitation: inv, redirectToEditor } = result;
         if (redirectToEditor) {
           void router.navigate({
             to: "/editor/$invitationId",
@@ -133,12 +139,5 @@ function OrderRoute() {
     );
   }
 
-  return (
-    <OrderPage
-      invitation={invitation}
-      onTemplateChange={(id) =>
-        void router.navigate({ to: "/order", search: { template: id }, replace: true })
-      }
-    />
-  );
+  return <OrderPage invitation={invitation} />;
 }
