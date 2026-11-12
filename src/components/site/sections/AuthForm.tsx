@@ -4,6 +4,7 @@ import { Link, useRouter } from "@tanstack/react-router";
 import { useAuth } from "@/lib/auth";
 import { isSafeNextPath } from "@/lib/safe-redirect";
 import { PasswordInput } from "@/components/ui/password-input";
+import { GoogleIcon } from "@/components/site/sections/GoogleIcon";
 
 type Mode = "login" | "signup";
 
@@ -13,7 +14,7 @@ interface AuthFormProps {
 }
 
 export function AuthForm({ initialMode = "login", nextPath = "/dashboard" }: AuthFormProps) {
-  const { configured, signIn, signUp, user, loading } = useAuth();
+  const { configured, signIn, signUp, signInWithGoogle, user, loading } = useAuth();
   const router = useRouter();
   const [mode, setMode] = useState<Mode>(initialMode);
   const [fullName, setFullName] = useState("");
@@ -26,6 +27,29 @@ export function AuthForm({ initialMode = "login", nextPath = "/dashboard" }: Aut
   function goNext() {
     const target = isSafeNextPath(nextPath) ? nextPath : "/dashboard";
     void router.navigate({ href: target });
+  }
+
+  // Supabase reports OAuth failures (e.g. the user cancelled) in the redirect URL.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const hash = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+    if (params.get("error") || hash.get("error")) {
+      setError("Masuk dengan Google gagal atau dibatalkan. Silakan coba lagi.");
+    }
+  }, []);
+
+  async function handleGoogle() {
+    setError(null);
+    setInfo(null);
+    setSubmitting(true);
+    const target = isSafeNextPath(nextPath) ? nextPath : "/dashboard";
+    const redirectTo = `${window.location.origin}/login?next=${encodeURIComponent(target)}`;
+    const result = await signInWithGoogle(redirectTo);
+    // On success the browser navigates away, so only reset on error.
+    if (result.error) {
+      setError(result.error);
+      setSubmitting(false);
+    }
   }
 
   useEffect(() => {
@@ -122,6 +146,22 @@ export function AuthForm({ initialMode = "login", nextPath = "/dashboard" }: Aut
           >
             Daftar
           </button>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => void handleGoogle()}
+          disabled={submitting || !configured}
+          className="flex h-12 w-full items-center justify-center gap-3 rounded-2xl border border-border-subtle bg-surface-canvas px-4 font-label-btn text-label-btn text-charcoal transition-colors hover:bg-surface-container disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          <GoogleIcon className="size-5" />
+          {mode === "login" ? "Masuk dengan Google" : "Daftar dengan Google"}
+        </button>
+
+        <div className="my-6 flex items-center gap-3" aria-hidden="true">
+          <span className="h-px flex-1 bg-border-subtle" />
+          <span className="font-body-sm text-body-sm text-text-muted">atau dengan email</span>
+          <span className="h-px flex-1 bg-border-subtle" />
         </div>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-5">
