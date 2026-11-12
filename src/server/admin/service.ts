@@ -248,3 +248,140 @@ export async function markInvitationPaid(
 
   return { alreadyPaid: false };
 }
+
+/** Finds an auth user id by email (case-insensitive), scanning the user list page by page. */
+export async function findUserIdByEmail(db: AdminDb, email: string): Promise<string | null> {
+  const target = email.trim().toLowerCase();
+  for (let page = 1; page <= 50; page++) {
+    const { data, error } = await db.auth.admin.listUsers({ page, perPage: 1000 });
+    if (error) throw new Error(error.message);
+    const match = data.users.find((u) => u.email?.toLowerCase() === target);
+    if (match) return match.id;
+    if (data.users.length < 1000) return null;
+  }
+  return null;
+}
+
+export class AdminActionError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "AdminActionError";
+  }
+}
+
+export type CreateForClientInput = {
+  email: string;
+  partnerA: string;
+  partnerB: string;
+  templateId: string;
+  markPaid: boolean;
+  note: string;
+  /** Where the invite email sends the client to set a password. */
+  setPasswordUrl: string;
+};
+
+export type CreateForClientResult = {
+  invitationId: string;
+  slug: string;
+  /** True when a new account was created and an invite email was sent. */
+  invited: boolean;
+  paid: boolean;
+};
+
+async function firstFreeSlug(db: AdminDb, candidates: string[]): Promise<string> {
+  for (const slug of candidates) {
+    const { data, error } = await db.from("invitations").select("id").eq("slug", slug).limit(1);
+    if (error) throw new Error(error.message);
+    if (!data || data.length === 0) return slug;
+  }
+  return `draft-${crypto.randomUUID().slice(0, 8)}`;
+}
+
+/**
+ * Creates (or reuses) a client account and a draft invitation for it, optionally
+ * marking it paid. New accounts get a Supabase invite email to set their own password,
+ * so the admin never handles the client's password. The client fills in and publishes
+ * the invitation themselves.
+ */
+export async function createInvitationForClient(
+  db: AdminDb,
+  adminId: string,
+  input: CreateForClientInput,
+  deps: {
+    slugFor: (a: string, b: string) => string;
+    isReserved: (slug: string) => boolean;
+  },
+): Promise<CreateForClientResult> {
+  const email = input.email.trim().toLowerCase();
+
+  let userId = await findUserIdByEmail(db, email);
+  let invited = false;
+  if (!userId) {
+    const { data, error } = await db.auth.admin.inviteUserByEmail(email, {
+      redirectTo: input.setPasswordUrl,
+      data: { full_name: `${input.partnerA} & ${input.partnerB}` },
+    });
+    if (error || !data.user) throw new Error(error?.message ?? "Invite failed");
+    userId = data.user.id;
+    invited = true;
+  } else {
+    const { data: admin } = await db
+      .from("admin_users")
+      .select("user_id")
+      .eq("user_id", userId)
+      .maybeSingle();
+    if (admin) throw new AdminActionError("That email belongs to an admin account.");
+    const { data: existing, error } = await db
+      .from("invitations")
+      .select("slug")
+      .eq("owner_id", userId)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    if (existing) {
+      throw new AdminActionError(
+        `This client already has an invitation (/${existing.slug}). Use Mark as paid on it instead.`,
+      );
+    }
+  }
+
+  const base = deps.slugFor(input.partnerA, input.partnerB);
+  const candidates = [
+    base,
+    `${base}-2`,
+    `${base}-3`,
+    `${base}-${Date.now().toString(36).slice(-4)}`,
+  ].filter((s) => s.length <= 64 && !deps.isReserved(s));
+  const slug = await firstFreeSlug(db, candidates);
+
+  const { data: invitation, error: insertError } = await db
+    .from("invitations")
+    .insert({
+      owner_id: userId,
+      template_id: input.templateId,
+      slug,
+      partner_a_name: input.partnerA,
+      partner_b_name: input.partnerB,
+      status: "draft",
+      payment_status: "unpaid",
+    })
+    .select("id")
+    .single();
+  if (insertError) throw new Error(insertError.message);
+
+  const { error: logError } = await db.from("admin_audit_log").insert({
+    admin_id: adminId,
+    action: "create_for_client",
+    target_type: "invitation",
+    target_id: invitation.id,
+    details: { email, slug, invited, note: input.note },
+  });
+  if (logError) console.error("admin audit log failed", logError.message);
+
+  let paid = false;
+  if (input.markPaid) {
+    await markInvitationPaid(db, adminId, invitation.id, input.note);
+    paid = true;
+  }
+
+  return { invitationId: invitation.id, slug, invited, paid };
+}
