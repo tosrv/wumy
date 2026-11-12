@@ -26,7 +26,7 @@ export function useRedirectAdmins(): AdminCheck {
     void checkIsAdmin().then((isAdmin) => {
       if (cancelled) return;
       setState(isAdmin ? "admin" : "customer");
-      if (isAdmin) void router.navigate({ to: "/admin", replace: true });
+      if (isAdmin) void router.navigate({ to: "/admin/invitations", replace: true });
     });
     return () => {
       cancelled = true;
