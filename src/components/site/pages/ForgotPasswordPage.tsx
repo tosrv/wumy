@@ -1,7 +1,9 @@
-import { useState, type FormEvent } from "react";
+import { useRef, useState, type FormEvent } from "react";
 import { Link } from "@tanstack/react-router";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import { absoluteUrl } from "@/lib/seo";
+import { TurnstileWidget, type TurnstileWidgetHandle } from "@/components/ui/turnstile-widget";
+import { CAPTCHA_FAILED_MESSAGE, isCaptchaError, isTurnstileEnabled } from "@/lib/turnstile";
 
 const inputClass =
   "h-12 rounded-2xl border border-border-subtle bg-surface-canvas px-4 font-body-md text-body-md text-charcoal outline-none placeholder:text-text-muted focus-visible:ring-2 focus-visible:ring-charcoal/20";
@@ -11,6 +13,9 @@ export function ForgotPasswordPage() {
   const [busy, setBusy] = useState(false);
   const [sent, setSent] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const captchaRef = useRef<TurnstileWidgetHandle>(null);
+  const captchaRequired = isTurnstileEnabled();
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
@@ -20,13 +25,22 @@ export function ForgotPasswordPage() {
       setError("Layanan login belum tersedia. Coba lagi nanti.");
       return;
     }
+    if (captchaRequired && !captchaToken) {
+      setError("Selesaikan verifikasi keamanan terlebih dahulu.");
+      return;
+    }
     setBusy(true);
     try {
       const { error: resetError } = await supabase.auth.resetPasswordForEmail(email.trim(), {
         redirectTo: absoluteUrl("/reset-password"),
+        ...(captchaToken ? { captchaToken } : {}),
       });
       // Rate limits are worth showing; anything else gets the neutral message so
       // the page never reveals whether an email has an account.
+      if (resetError && isCaptchaError(resetError.message)) {
+        setError(CAPTCHA_FAILED_MESSAGE);
+        return;
+      }
       if (resetError && resetError.status === 429) {
         setError("Terlalu banyak permintaan. Tunggu beberapa menit lalu coba lagi.");
         return;
@@ -35,6 +49,8 @@ export function ForgotPasswordPage() {
     } catch {
       setError("Gagal mengirim. Periksa koneksi lalu coba lagi.");
     } finally {
+      // Turnstile tokens are single-use, so get a fresh one for the next attempt.
+      if (captchaRequired) captchaRef.current?.reset();
       setBusy(false);
     }
   }
@@ -68,6 +84,7 @@ export function ForgotPasswordPage() {
                   className={inputClass}
                 />
               </label>
+              <TurnstileWidget ref={captchaRef} action="password-reset" onToken={setCaptchaToken} />
               {error && (
                 <p className="rounded-2xl bg-error-container px-4 py-3 font-body-sm text-body-sm text-on-error-container">
                   {error}

@@ -1,11 +1,13 @@
 import { track } from "@/lib/analytics";
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { Link, useRouter } from "@tanstack/react-router";
 import { useAuth } from "@/lib/auth";
 import { isSafeNextPath } from "@/lib/safe-redirect";
 import { PasswordInput } from "@/components/ui/password-input";
 import { PasswordRequirements } from "@/components/ui/password-requirements";
 import { isStrongPassword } from "@/lib/password";
+import { TurnstileWidget, type TurnstileWidgetHandle } from "@/components/ui/turnstile-widget";
+import { CAPTCHA_FAILED_MESSAGE, isCaptchaError, isTurnstileEnabled } from "@/lib/turnstile";
 import { GoogleIcon } from "@/components/site/sections/GoogleIcon";
 import { consumeOAuthPending, isNewAccount, markOAuthPending } from "@/lib/oauth-signup";
 
@@ -26,6 +28,9 @@ export function AuthForm({ initialMode = "login", nextPath = "/dashboard" }: Aut
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const captchaRef = useRef<TurnstileWidgetHandle>(null);
+  const captchaRequired = isTurnstileEnabled();
 
   function goNext() {
     const target = isSafeNextPath(nextPath) ? nextPath : "/dashboard";
@@ -71,13 +76,18 @@ export function AuthForm({ initialMode = "login", nextPath = "/dashboard" }: Aut
     event.preventDefault();
     setError(null);
     setInfo(null);
+    if (captchaRequired && !captchaToken) {
+      setError("Selesaikan verifikasi keamanan terlebih dahulu.");
+      return;
+    }
     setSubmitting(true);
+    const token = captchaToken ?? undefined;
 
     try {
       if (mode === "login") {
-        const result = await signIn(email, password);
+        const result = await signIn(email, password, token);
         if (result.error) {
-          setError(result.error);
+          setError(isCaptchaError(result.error) ? CAPTCHA_FAILED_MESSAGE : result.error);
           return;
         }
         goNext();
@@ -90,15 +100,17 @@ export function AuthForm({ initialMode = "login", nextPath = "/dashboard" }: Aut
         );
         return;
       }
-      const result = await signUp(email, password, fullName.trim());
+      const result = await signUp(email, password, fullName.trim(), token);
       if (result.error) {
-        setError(result.error);
+        setError(isCaptchaError(result.error) ? CAPTCHA_FAILED_MESSAGE : result.error);
         return;
       }
       track("signup", { source: "email" });
       setInfo("Akun berhasil dibuat. Jika diminta, buka email untuk konfirmasi, lalu masuk.");
       setMode("login");
     } finally {
+      // Turnstile tokens are single-use, so get a fresh one for the next attempt.
+      if (captchaRequired) captchaRef.current?.reset();
       setSubmitting(false);
     }
   }
@@ -230,6 +242,12 @@ export function AuthForm({ initialMode = "login", nextPath = "/dashboard" }: Aut
               </Link>
             )}
           </label>
+
+          <TurnstileWidget
+            ref={captchaRef}
+            action={mode === "login" ? "login" : "signup"}
+            onToken={setCaptchaToken}
+          />
 
           {error && (
             <p className="rounded-2xl bg-error-container px-4 py-3 font-body-sm text-body-sm text-on-error-container">
