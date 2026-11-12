@@ -113,6 +113,7 @@ Admins can list invitations and payments, mark an invitation as paid without a D
   select id from auth.users where email = 'you@example.com';
   ```
   Remove one with `delete from public.admin_users where user_id = '<uuid>';`.
+- Use a **separate account** for admin (e.g. `admin@…`), not your personal or test account. Admins are sent to `/admin` after login, and `/dashboard`, `/editor`, and `/order` redirect them there, so an admin account never gets an invitation of its own.
 - Every admin action goes through a server function (`src/server/admin/`) that checks the session and `admin_users` first. Non-admins and signed-out visitors get the normal 404 page.
 - **Mark as paid** records a Rp0 `manual` payment and runs `mark_invitation_paid` (the same path as the DOKU webhook). It does not publish; the owner still presses **Terbitkan**. A reason is required and written to the activity log.
 - Requires `SUPABASE_SERVICE_ROLE_KEY` on the server.
