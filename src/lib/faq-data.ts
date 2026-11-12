@@ -50,7 +50,7 @@ export function faqItems(priceLabel: string): FaqItem[] {
     {
       question: "Berapa banyak foto dan musik yang bisa diunggah?",
       answer:
-        "Foto sampul, satu foto untuk setiap mempelai, dan galeri hingga 6 foto (maksimal 5 MB per foto). Musik latar berupa satu file MP3 (maksimal 10 MB). Gunakan lagu yang boleh kamu bagikan.",
+        "Foto sampul, satu foto untuk setiap mempelai, dan galeri hingga 6 foto (maksimal 20 MB per foto, otomatis diperkecil saat diunggah). Musik latar berupa satu file MP3 (maksimal 10 MB). Gunakan lagu yang boleh kamu bagikan.",
     },
     {
       question: "Apakah bisa refund?",
