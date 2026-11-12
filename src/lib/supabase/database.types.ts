@@ -291,6 +291,49 @@ export type Database = {
         };
         Relationships: [];
       };
+      admin_users: {
+        Row: {
+          user_id: string;
+          created_at: string;
+        };
+        Insert: {
+          user_id: string;
+          created_at?: string;
+        };
+        Update: {
+          user_id?: string;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      admin_audit_log: {
+        Row: {
+          id: number;
+          admin_id: string | null;
+          action: string;
+          target_type: string;
+          target_id: string | null;
+          details: Json;
+          created_at: string;
+        };
+        Insert: {
+          admin_id?: string | null;
+          action: string;
+          target_type: string;
+          target_id?: string | null;
+          details?: Json;
+          created_at?: string;
+        };
+        Update: {
+          admin_id?: string | null;
+          action?: string;
+          target_type?: string;
+          target_id?: string | null;
+          details?: Json;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: {

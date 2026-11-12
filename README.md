@@ -102,6 +102,21 @@ The `dev` branch is deployed as a Vercel **Preview** on the `dev.wumy.my.id` dom
 
 The staging lock (`src/server/staging/gate.ts`) requires Basic Auth on every page except `POST /api/webhooks/doku` (protected by the DOKU signature), and adds `X-Robots-Tag: noindex`. Production is unaffected because it has no `STAGING_PASSWORD`. Turn off Vercel Deployment Protection for Preview so DOKU sandbox webhooks can get through.
 
+## Admin (`/admin`)
+
+Admins can list invitations and payments, mark an invitation as paid without a DOKU payment (a free invitation, or a missed webhook), and see the activity log.
+
+- Admins are stored in `public.admin_users`. That table, and `public.admin_audit_log`, have RLS on with no policies, so only the server (service role) can read them.
+- Add an admin in the Supabase **SQL Editor** of each project (the user must have signed up first):
+  ```sql
+  insert into public.admin_users (user_id)
+  select id from auth.users where email = 'you@example.com';
+  ```
+  Remove one with `delete from public.admin_users where user_id = '<uuid>';`.
+- Every admin action goes through a server function (`src/server/admin/`) that checks the session and `admin_users` first. Non-admins and signed-out visitors get the normal 404 page.
+- **Mark as paid** records a Rp0 `manual` payment and runs `mark_invitation_paid` (the same path as the DOKU webhook). It does not publish; the owner still presses **Terbitkan**. A reason is required and written to the activity log.
+- Requires `SUPABASE_SERVICE_ROLE_KEY` on the server.
+
 ## Payments (DOKU Checkout)
 
 - `/order` calls the `createPublishCheckout` server function → DOKU page → back to `/payment/status?invoice=…`.
