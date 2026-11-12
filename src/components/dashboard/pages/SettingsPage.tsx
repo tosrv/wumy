@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PasswordInput } from "@/components/ui/password-input";
+import { PasswordRequirements } from "@/components/ui/password-requirements";
+import { newPasswordIssue } from "@/lib/password";
 
 export function SettingsPage() {
   const { user, configured } = useAuth();
@@ -57,12 +59,9 @@ export function SettingsPage() {
   async function savePassword() {
     setError(null);
     setPasswordMessage(null);
-    if (password.length < 8) {
-      setError("Password must be at least 8 characters.");
-      return;
-    }
-    if (password !== confirmPassword) {
-      setError("Password confirmation does not match.");
+    const issue = newPasswordIssue(password, confirmPassword, "en");
+    if (issue) {
+      setError(issue);
       return;
     }
     if (!configured) {
@@ -176,9 +175,10 @@ export function SettingsPage() {
                 styled
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="At least 8 characters"
+                placeholder="Create a strong password"
                 className="h-10 rounded-xl bg-secondary/70"
               />
+              <PasswordRequirements password={password} lang="en" className="mt-2" />
             </div>
             <div>
               <Label className="mb-1.5 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
