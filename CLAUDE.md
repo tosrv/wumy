@@ -1,65 +1,69 @@
 # CLAUDE.md
 
-Panduan untuk Claude Code saat bekerja di repo ini. Detail produk, env vars, Supabase, dan DOKU ada di [`README.md`](README.md), jadi baca itu dulu bila perlu.
+Guidance for Claude Code when working in this repository. Product details, env vars, Supabase, and DOKU setup live in [`README.md`](README.md); read it when needed.
 
-## Ringkasan proyek
+## Language
 
-WUMY: undangan pernikahan digital (situs publik, pesanan + pembayaran DOKU, editor, halaman undangan `/<slug>`).
+- **English** for everything developer-facing: commit messages, branch names, PR titles and descriptions, review replies, docs (including this file), and code comments.
+- **Bahasa Indonesia** only for user-facing app text (UI copy, labels, toasts, error messages shown to users, emails). Match the surrounding copy: some dashboard pages are already in English.
 
-Stack: TanStack Start (React, SSR, Vite, Nitro → Vercel), Supabase (Postgres, Auth, Storage), DOKU Checkout, PostHog (opsional), Tailwind + shadcn/ui (Radix), ikon `lucide-react`.
+## Project overview
 
-## Perintah
+WUMY: digital wedding invitations (public site, ordering + DOKU payments, editor, public invitation page at `/<slug>`).
 
-| Perintah | Fungsi |
+Stack: TanStack Start (React, SSR, Vite, Nitro → Vercel), Supabase (Postgres, Auth, Storage), DOKU Checkout, PostHog (optional), Tailwind + shadcn/ui (Radix), `lucide-react` icons.
+
+## Commands
+
+| Command | Purpose |
 | --- | --- |
-| `npm install` | Pasang dependensi (Node.js 22+) |
+| `npm install` | Install dependencies (Node.js 22+) |
 | `npm run dev` | Dev server |
-| `npm run build` | Build produksi |
+| `npm run build` | Production build |
 | `npm test` | Vitest (`src/**/*.test.ts`) |
 | `npm run lint` | ESLint + Prettier |
-| `npx tsc --noEmit` | Cek tipe |
+| `npx tsc --noEmit` | Type check |
 
-Sebelum commit, jalankan minimal `npx tsc --noEmit` dan `npm test`. Pastikan tidak ada error lint baru dari file yang diubah. Beberapa file lama masih punya error format Prettier; jangan format ulang seluruh file kecuali diminta.
+Before committing, run at least `npx tsc --noEmit` and `npm test`, and make sure the files you changed introduce no new lint errors. Some older files still have Prettier errors; don't reformat whole files unless asked.
 
-## Struktur
+## Structure
 
-- `src/routes/`: routing berbasis file TanStack Start (lihat `src/routes/README.md`). `src/routeTree.gen.ts` dibuat otomatis, jangan diedit manual.
-  - `_site/`: halaman publik (login, FAQ, legal, reset password, dll).
-  - `dashboard.*`, `editor.*`, `order.tsx`, `payment.status.tsx`: area pengguna.
-  - `$slug.tsx`: halaman undangan publik.
-  - `api/webhooks/doku.ts`: webhook pembayaran DOKU.
-- `src/components/`: `ui/` (shadcn + komponen bersama, mis. `password-input.tsx`), `site/`, `dashboard/`, `editor/`, `invitations/`, `order/`, `payments/`.
-- `src/lib/`: logika bersama + unit test (`*.test.ts` di sebelah file sumbernya).
-- `src/server/`: kode server saja (pembayaran, staging gate, meta share).
-- `src/templates/`, `src/data/templates.ts`: template undangan.
-- `supabase/schema.sql`: skema lengkap (tabel, RLS, trigger, fungsi, storage). `supabase/dev/`: skrip khusus development.
+- `src/routes/`: TanStack Start file-based routing (see `src/routes/README.md`). `src/routeTree.gen.ts` is generated; never edit it by hand.
+  - `_site/`: public pages (login, FAQ, legal, reset password, etc.).
+  - `dashboard.*`, `editor.*`, `order.tsx`, `payment.status.tsx`: signed-in area.
+  - `$slug.tsx`: public invitation page.
+  - `api/webhooks/doku.ts`: DOKU payment webhook.
+- `src/components/`: `ui/` (shadcn + shared components, e.g. `password-input.tsx`), `site/`, `dashboard/`, `editor/`, `invitations/`, `order/`, `payments/`.
+- `src/lib/`: shared logic + unit tests (`*.test.ts` next to the source file).
+- `src/server/`: server-only code (payments, staging gate, share meta).
+- `src/templates/`, `src/data/templates.ts`: invitation templates.
+- `supabase/schema.sql`: full schema (tables, RLS, triggers, functions, storage). `supabase/dev/`: development-only scripts.
 
-## Konvensi kode
+## Code conventions
 
-- TypeScript, impor alias `@/` → `src/`.
-- Prettier: lebar 100, titik koma, kutip ganda, trailing comma.
-- Teks UI untuk pengguna memakai Bahasa Indonesia (kecuali dashboard yang sudah berbahasa Inggris, ikuti teks di sekitarnya).
-- Pakai ulang komponen di `src/components/ui/` sebelum membuat yang baru. Untuk kolom kata sandi, pakai `PasswordInput`.
-- Rahasia (`SUPABASE_SERVICE_ROLE_KEY`, `DOKU_SECRET_KEY`, `STAGING_PASSWORD`) hanya di server dan jangan pernah diberi awalan `VITE_`.
-- Status pembayaran hanya diubah server (`mark_invitation_paid`). Jangan melonggarkan aturan RLS/pembayaran di `schema.sql`.
-- Daftar slug terlarang di `src/lib/slug.ts` (`RESERVED_SLUGS`) harus sinkron dengan database; perbarui keduanya bila menambah route tingkat atas.
+- TypeScript; `@/` import alias → `src/`.
+- Prettier: width 100, semicolons, double quotes, trailing commas.
+- Reuse components in `src/components/ui/` before adding new ones. Use `PasswordInput` for password fields.
+- Secrets (`SUPABASE_SERVICE_ROLE_KEY`, `DOKU_SECRET_KEY`, `STAGING_PASSWORD`) are server-only and must never get a `VITE_` prefix.
+- Payment status is changed only on the server (`mark_invitation_paid`). Don't loosen RLS or payment rules in `schema.sql`.
+- Reserved slugs in `src/lib/slug.ts` (`RESERVED_SLUGS`) must stay in sync with the database; update both when adding a top-level route.
 
-## Branch dan alur kerja Git
+## Branches and Git workflow
 
-- `main`: produksi. `dev`: staging (`dev.wumy.my.id`, Supabase dev, DOKU sandbox).
-- Kerjakan perubahan di branch baru dari `dev`, dengan nama seperti `fix/...`, `feat/...`, `docs/...`, `chore/...`.
-- Pesan commit memakai Conventional Commits, mis. `fix(auth): ...`, `feat(staging): ...`.
-- Buka PR ke `dev`, jangan push langsung ke `dev` atau `main`.
+- `main`: production. `dev`: staging (`dev.wumy.my.id`, dev Supabase, DOKU sandbox).
+- Work on a new branch off `dev`, named like `fix/...`, `feat/...`, `docs/...`, `chore/...`.
+- Use Conventional Commits, e.g. `fix(auth): ...`, `feat(staging): ...`.
+- Open PRs against `dev`; don't push directly to `dev` or `main`.
 
-### Setelah PR di-merge
+### After a PR is merged
 
-Selalu lakukan langkah ini supaya branch lokal sama dengan GitHub:
+Always run these steps so local branches match GitHub:
 
 ```bash
 git checkout dev
 git pull origin dev
-git branch -d <branch-yang-sudah-di-merge>
+git branch -d <merged-branch>
 git fetch --prune origin
 ```
 
-Jika branch remote belum terhapus otomatis oleh GitHub, hapus juga: `git push origin --delete <branch>`.
+If GitHub didn't delete the remote branch automatically, delete it too: `git push origin --delete <branch>`.
