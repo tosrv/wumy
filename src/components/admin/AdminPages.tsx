@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState, type ReactNode } from "react";
-import { useRouter } from "@tanstack/react-router";
+import { Outlet } from "@tanstack/react-router";
 import { useAuth } from "@/lib/auth";
 import {
   checkIsAdmin,
@@ -11,6 +11,7 @@ import {
 import type { PaymentStatus } from "@/lib/supabase/database.types";
 import type { AdminAuditEntry, AdminInvitation, AdminPayment } from "@/server/admin/service";
 import { NotFoundPage } from "@/components/NotFoundPage";
+import { AdminShell } from "@/components/admin/AdminShell";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -22,7 +23,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Table,
   TableBody,
@@ -201,7 +201,25 @@ function MarkPaidDialog({
   );
 }
 
-function InvitationsTab({ onNotice }: { onNotice: (message: string) => void }) {
+function PageHeader({ title, description }: { title: string; description: string }) {
+  return (
+    <div className="mb-6 flex flex-col gap-1">
+      <h1 className="font-display text-3xl font-bold tracking-tight text-foreground md:text-4xl">
+        {title}
+      </h1>
+      <p className="text-sm text-muted-foreground">{description}</p>
+    </div>
+  );
+}
+
+function PageBody({ children }: { children: ReactNode }) {
+  return (
+    <main className="flex w-full flex-1 flex-col px-4 py-6 pb-16 md:px-8 md:py-8">{children}</main>
+  );
+}
+
+export function AdminInvitationsPage() {
+  const [notice, setNotice] = useState<string | null>(null);
   const [searchInput, setSearchInput] = useState("");
   const [search, setSearch] = useState("");
   const [target, setTarget] = useState<AdminInvitation | null>(null);
@@ -209,7 +227,19 @@ function InvitationsTab({ onNotice }: { onNotice: (message: string) => void }) {
   const list = usePagedList(load);
 
   return (
-    <>
+    <PageBody>
+      <PageHeader
+        title="Invitations"
+        description="Every invitation, newest first. Mark one as paid for a free invitation or a missed DOKU webhook."
+      />
+      {notice && (
+        <div className="mb-4 flex items-center justify-between rounded-md border bg-secondary px-4 py-2 text-sm">
+          <span>{notice}</span>
+          <button type="button" className="text-muted-foreground" onClick={() => setNotice(null)}>
+            Dismiss
+          </button>
+        </div>
+      )}
       <form
         className="mb-4 flex gap-2"
         onSubmit={(e) => {
@@ -245,7 +275,7 @@ function InvitationsTab({ onNotice }: { onNotice: (message: string) => void }) {
             <TableBody>
               {list.rows.map((inv) => (
                 <TableRow key={inv.id}>
-                  <TableCell className="font-medium">
+                  <TableCell className="whitespace-nowrap font-medium">
                     {inv.status === "published" ? (
                       <a
                         href={`/${inv.slug}`}
@@ -259,7 +289,7 @@ function InvitationsTab({ onNotice }: { onNotice: (message: string) => void }) {
                       `/${inv.slug}`
                     )}
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="whitespace-nowrap">
                     {[inv.partnerA, inv.partnerB].filter(Boolean).join(" & ") || "—"}
                   </TableCell>
                   <TableCell className="text-muted-foreground">{inv.ownerEmail ?? "—"}</TableCell>
@@ -291,17 +321,17 @@ function InvitationsTab({ onNotice }: { onNotice: (message: string) => void }) {
         onClose={() => setTarget(null)}
         onDone={(message) => {
           setTarget(null);
-          onNotice(message);
+          setNotice(message);
           void list.reload();
         }}
       />
-    </>
+    </PageBody>
   );
 }
 
 const PAYMENT_FILTERS: (PaymentStatus | "all")[] = ["all", "pending", "paid", "failed", "refunded"];
 
-function PaymentsTab() {
+export function AdminPaymentsPage() {
   const [status, setStatus] = useState<PaymentStatus | "all">("all");
   const load = useCallback(
     (page: number) => fetchAdminPayments(page, status === "all" ? undefined : status),
@@ -310,7 +340,8 @@ function PaymentsTab() {
   const list = usePagedList(load);
 
   return (
-    <>
+    <PageBody>
+      <PageHeader title="Payments" description="All payments, including DOKU and manual ones." />
       <div className="mb-4 flex flex-wrap gap-2">
         {PAYMENT_FILTERS.map((value) => (
           <Button
@@ -343,7 +374,7 @@ function PaymentsTab() {
             <TableBody>
               {list.rows.map((p: AdminPayment) => (
                 <TableRow key={p.id}>
-                  <TableCell className="font-medium">
+                  <TableCell className="whitespace-nowrap font-medium">
                     {p.invitationSlug ? `/${p.invitationSlug}` : "—"}
                   </TableCell>
                   <TableCell>{rupiah.format(p.amountIdr)}</TableCell>
@@ -365,21 +396,17 @@ function PaymentsTab() {
         </div>
       </ListState>
       <Pager page={list.page} hasMore={list.hasMore} onChange={list.setPage} />
-    </>
+    </PageBody>
   );
 }
 
-function ActivityTab({ refreshKey }: { refreshKey: number }) {
-  // refreshKey changes after an admin action so the log shows it straight away.
-  const load = useCallback(
-    (page: number) => fetchAdminAuditLog(page),
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- refetch when refreshKey changes
-    [refreshKey],
-  );
+export function AdminActivityPage() {
+  const load = useCallback((page: number) => fetchAdminAuditLog(page), []);
   const list = usePagedList(load);
 
   return (
-    <>
+    <PageBody>
+      <PageHeader title="Activity" description="Every action taken by an admin." />
       <ListState loading={list.loading} error={list.error} empty={list.rows.length === 0}>
         <div className="overflow-x-auto">
           <Table>
@@ -411,16 +438,14 @@ function ActivityTab({ refreshKey }: { refreshKey: number }) {
         </div>
       </ListState>
       <Pager page={list.page} hasMore={list.hasMore} onChange={list.setPage} />
-    </>
+    </PageBody>
   );
 }
 
-export function AdminPage() {
-  const { user, loading, signOut } = useAuth();
-  const router = useRouter();
+/** /admin layout: only admins get the shell; everyone else sees the normal 404. */
+export function AdminLayout() {
+  const { user, loading } = useAuth();
   const [access, setAccess] = useState<"checking" | "admin" | "denied">("checking");
-  const [notice, setNotice] = useState<string | null>(null);
-  const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
     if (loading) return;
@@ -442,61 +467,12 @@ export function AdminPage() {
     };
   }, [loading, user]);
 
-  // Non-admins (and signed-out visitors) see the normal 404, so the page doesn't
-  // reveal that it exists.
   if (access === "denied") return <NotFoundPage />;
   if (access === "checking") return <div className="min-h-screen bg-background" />;
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
-          <h1 className="font-display text-xl font-bold">WUMY Admin</h1>
-          <div className="flex items-center gap-3 text-sm">
-            <span className="hidden text-muted-foreground sm:inline">{user?.email}</span>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                void signOut().then(() => router.navigate({ to: "/login" }));
-              }}
-            >
-              Sign out
-            </Button>
-          </div>
-        </div>
-      </header>
-      <main className="mx-auto max-w-6xl px-4 py-6">
-        {notice && (
-          <div className="mb-4 flex items-center justify-between rounded-md border bg-secondary px-4 py-2 text-sm">
-            <span>{notice}</span>
-            <button type="button" className="text-muted-foreground" onClick={() => setNotice(null)}>
-              Dismiss
-            </button>
-          </div>
-        )}
-        <Tabs defaultValue="invitations">
-          <TabsList>
-            <TabsTrigger value="invitations">Invitations</TabsTrigger>
-            <TabsTrigger value="payments">Payments</TabsTrigger>
-            <TabsTrigger value="activity">Activity</TabsTrigger>
-          </TabsList>
-          <TabsContent value="invitations" className="mt-4">
-            <InvitationsTab
-              onNotice={(message) => {
-                setNotice(message);
-                setRefreshKey((k) => k + 1);
-              }}
-            />
-          </TabsContent>
-          <TabsContent value="payments" className="mt-4">
-            <PaymentsTab />
-          </TabsContent>
-          <TabsContent value="activity" className="mt-4">
-            <ActivityTab refreshKey={refreshKey} />
-          </TabsContent>
-        </Tabs>
-      </main>
-    </div>
+    <AdminShell>
+      <Outlet />
+    </AdminShell>
   );
 }

@@ -39,7 +39,9 @@ export function AuthForm({ initialMode = "login", nextPath = "/dashboard" }: Aut
     const target = isSafeNextPath(nextPath) ? nextPath : "/dashboard";
     // Admin accounts land on /admin instead of the customer dashboard.
     void checkIsAdmin().then((isAdmin) =>
-      router.navigate({ href: isAdmin && target.startsWith("/dashboard") ? "/admin" : target }),
+      router.navigate({
+        href: isAdmin && target.startsWith("/dashboard") ? "/admin/invitations" : target,
+      }),
     );
   }
 
