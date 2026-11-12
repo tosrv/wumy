@@ -382,7 +382,9 @@ export function AdminPaymentsPage() {
                   <TableCell>
                     <StatusBadge status={p.status} />
                   </TableCell>
-                  <TableCell className="font-mono text-xs">{p.invoiceNumber ?? "—"}</TableCell>
+                  <TableCell className="whitespace-nowrap font-mono text-xs">
+                    {p.invoiceNumber ?? "—"}
+                  </TableCell>
                   <TableCell className="whitespace-nowrap text-muted-foreground">
                     {formatDate(p.createdAt)}
                   </TableCell>
