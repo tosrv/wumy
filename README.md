@@ -58,9 +58,36 @@ To skip payment in the **development** project, run [`supabase/dev/mark_paid.sql
 | `DOKU_API_BASE` | payments | `https://api-sandbox.doku.com` or `https://api.doku.com` |
 | `PUBLISH_PRICE_IDR` | no | Override the price (rupiah, ≥ 1000). Default Rp 99,000 |
 | `VITE_POSTHOG_KEY`, `VITE_POSTHOG_HOST` | no | PostHog analytics; empty = disabled |
+| `VITE_STORAGE_PUBLIC_URL` | no | Public URL of the Cloudflare R2 bucket, e.g. `https://media.wumy.my.id`. Set = photos and music use R2; empty = Supabase Storage |
+| `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET` | with R2 | Cloudflare R2 API token and bucket; **secret**, server only. Also needs `SUPABASE_SERVICE_ROLE_KEY` |
 | `VITE_TURNSTILE_SITE_KEY` | no | Cloudflare Turnstile site key (public). Empty = no CAPTCHA widget. Must be set if Supabase CAPTCHA protection is on |
 
 Never give secret variables a `VITE_` prefix. Redeploy on Vercel after changing env vars. Without a complete DOKU configuration, `/order` shows "Pembayaran online segera hadir" ("Online payment coming soon").
+
+## File storage (Cloudflare R2 in production)
+
+Invitation photos and music are stored in **Supabase Storage** by default (dev, local). Production uses **Cloudflare R2** when `VITE_STORAGE_PUBLIC_URL` is set. Both use the same buckets and paths (`{owner_id}/{invitation_id}/{file}`); in R2 everything lives in one bucket under the prefixes `invitation-photos/` and `invitation-music/`.
+
+With R2, the browser never gets R2 credentials. It asks a server function (`src/server/storage/functions.ts`) for a presigned upload URL; the server checks the Supabase session, that the path belongs to the caller's own invitation (same rule as the Supabase storage policies), and the file type and size limits (`src/lib/storage-rules.ts`). Deletes and listing go through server functions with the same checks.
+
+Setup:
+1. Cloudflare → **R2** → create a bucket (e.g. `wumy-media`).
+2. Bucket → **Settings → Custom Domains** → connect `media.wumy.my.id` (the zone must be on Cloudflare). This makes objects publicly readable and cached.
+3. Bucket → **Settings → CORS policy** → allow uploads from the site:
+   ```json
+   [
+     {
+       "AllowedOrigins": ["https://www.wumy.my.id", "https://wumy.my.id"],
+       "AllowedMethods": ["PUT"],
+       "AllowedHeaders": ["Content-Type", "Cache-Control"],
+       "MaxAgeSeconds": 3600
+     }
+   ]
+   ```
+4. R2 → **Manage API tokens** → create a token with **Object Read & Write** on that bucket. Note the Access Key ID, Secret Access Key, and your Account ID.
+5. Vercel (Production env): set `VITE_STORAGE_PUBLIC_URL`, `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET`, and `SUPABASE_SERVICE_ROLE_KEY`, then redeploy.
+
+Files already uploaded to Supabase Storage are not moved; switching a project to R2 is meant for one with no stored files yet.
 
 ## Staging (`dev.wumy.my.id`)
 
