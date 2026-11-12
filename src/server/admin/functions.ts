@@ -119,3 +119,29 @@ export const adminCreateInvitationForClient = createServerFn({ method: "POST" })
       throw err;
     }
   });
+
+export const adminSetClientPassword = createServerFn({ method: "POST" })
+  .validator(
+    z.object({
+      accessToken: token,
+      invitationId: z.string().uuid(),
+      password: z.string().min(1).max(128),
+    }),
+  )
+  .handler(async ({ data }): Promise<{ email: string | null } | { error: string }> => {
+    const { db, adminId } = await adminContext(data.accessToken);
+    const { setClientPassword, AdminActionError } = await import("./service");
+    const { isStrongPassword } = await import("@/lib/password");
+    try {
+      return await setClientPassword(
+        db,
+        adminId,
+        data.invitationId,
+        data.password,
+        isStrongPassword,
+      );
+    } catch (err) {
+      if (err instanceof AdminActionError) return { error: err.message };
+      throw err;
+    }
+  });

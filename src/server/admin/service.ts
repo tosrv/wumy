@@ -385,3 +385,56 @@ export async function createInvitationForClient(
 
   return { invitationId: invitation.id, slug, invited, paid };
 }
+
+/**
+ * Sets a new password for the invitation owner directly (for a client who can't use
+ * the reset email). The password must meet the app's strong-password rules. It is
+ * never logged; the audit log only records that it was changed. Admin accounts are
+ * refused, so this can't be used to take over another admin.
+ */
+export async function setClientPassword(
+  db: AdminDb,
+  adminId: string,
+  invitationId: string,
+  password: string,
+  isStrong: (password: string) => boolean,
+): Promise<{ email: string | null }> {
+  if (!isStrong(password)) {
+    throw new AdminActionError(
+      "Password is not strong enough: use 8+ characters with upper and lower case, a number, and a symbol.",
+    );
+  }
+
+  const { data: invitation, error } = await db
+    .from("invitations")
+    .select("id, slug, owner_id")
+    .eq("id", invitationId)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  if (!invitation) throw new AdminActionError("Invitation not found.");
+
+  const { data: admin } = await db
+    .from("admin_users")
+    .select("user_id")
+    .eq("user_id", invitation.owner_id)
+    .maybeSingle();
+  if (admin) throw new AdminActionError("That account is an admin account.");
+
+  const { data: updated, error: updateError } = await db.auth.admin.updateUserById(
+    invitation.owner_id,
+    { password },
+  );
+  if (updateError) throw new Error(updateError.message);
+  const email = updated.user?.email ?? null;
+
+  const { error: logError } = await db.from("admin_audit_log").insert({
+    admin_id: adminId,
+    action: "set_client_password",
+    target_type: "invitation",
+    target_id: invitation.id,
+    details: { slug: invitation.slug, email },
+  });
+  if (logError) console.error("admin audit log failed", logError.message);
+
+  return { email };
+}

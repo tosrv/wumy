@@ -4,6 +4,8 @@ import { useAuth } from "@/lib/auth";
 import {
   checkIsAdmin,
   createInvitationForClient,
+  generateStrongPassword,
+  setClientPasswordAsAdmin,
   fetchAdminAuditLog,
   fetchAdminInvitations,
   fetchAdminPayments,
@@ -36,6 +38,16 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { invitationTemplates } from "@/data/templates";
+import { PasswordInput } from "@/components/ui/password-input";
+import { PasswordRequirements } from "@/components/ui/password-requirements";
+import { isStrongPassword } from "@/lib/password";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { KeyRound, MoreHorizontal, BadgeCheck } from "lucide-react";
 
 const dateFormat = new Intl.DateTimeFormat("en-GB", {
   day: "numeric",
@@ -222,6 +234,95 @@ function PageBody({ children }: { children: ReactNode }) {
   );
 }
 
+function SetPasswordDialog({
+  invitation,
+  onClose,
+  onDone,
+}: {
+  invitation: AdminInvitation | null;
+  onClose: () => void;
+  onDone: (message: string) => void;
+}) {
+  const [password, setPassword] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setPassword("");
+    setError(null);
+  }, [invitation]);
+
+  async function submit() {
+    if (!invitation) return;
+    if (!isStrongPassword(password)) {
+      setError("Meet all the password requirements first.");
+      return;
+    }
+    setBusy(true);
+    setError(null);
+    try {
+      const result = await setClientPasswordAsAdmin(invitation.id, password);
+      if ("error" in result) {
+        setError(result.error);
+        return;
+      }
+      onDone(
+        `Password changed for ${result.email ?? invitation.ownerEmail ?? `/${invitation.slug}`}. ` +
+          "Share it with the client privately and ask them to change it in Settings.",
+      );
+    } catch (err) {
+      console.error(err);
+      setError("Failed to change the password. Try again.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <Dialog open={invitation !== null} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Set a new password</DialogTitle>
+          <DialogDescription>
+            For {invitation?.ownerEmail ?? "the client"} (/{invitation?.slug}). Their old password
+            stops working right away. The new password is not stored in the activity log.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="grid gap-2">
+          <div className="flex gap-2">
+            <div className="flex-1">
+              <PasswordInput
+                styled
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="New password"
+                autoComplete="new-password"
+              />
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setPassword(generateStrongPassword())}
+            >
+              Generate
+            </Button>
+          </div>
+          <PasswordRequirements password={password} lang="en" />
+        </div>
+        {error && <p className="text-sm text-destructive">{error}</p>}
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose} disabled={busy}>
+            Cancel
+          </Button>
+          <Button onClick={() => void submit()} disabled={busy || !isStrongPassword(password)}>
+            {busy ? "Saving…" : "Set password"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 function CreateForClientDialog({
   open,
   onClose,
@@ -367,6 +468,7 @@ function CreateForClientDialog({
 export function AdminInvitationsPage() {
   const [notice, setNotice] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
+  const [passwordTarget, setPasswordTarget] = useState<AdminInvitation | null>(null);
   const [searchInput, setSearchInput] = useState("");
   const [search, setSearch] = useState("");
   const [target, setTarget] = useState<AdminInvitation | null>(null);
@@ -453,11 +555,25 @@ export function AdminInvitationsPage() {
                     {formatDate(inv.createdAt)}
                   </TableCell>
                   <TableCell className="text-right">
-                    {inv.paymentStatus !== "paid" && (
-                      <Button size="sm" variant="outline" onClick={() => setTarget(inv)}>
-                        Mark as paid
-                      </Button>
-                    )}
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button size="icon" variant="ghost" aria-label={`Actions for /${inv.slug}`}>
+                          <MoreHorizontal className="size-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        {inv.paymentStatus !== "paid" && (
+                          <DropdownMenuItem onClick={() => setTarget(inv)}>
+                            <BadgeCheck />
+                            Mark as paid
+                          </DropdownMenuItem>
+                        )}
+                        <DropdownMenuItem onClick={() => setPasswordTarget(inv)}>
+                          <KeyRound />
+                          Set password
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </TableCell>
                 </TableRow>
               ))}
@@ -466,6 +582,14 @@ export function AdminInvitationsPage() {
         </div>
       </ListState>
       <Pager page={list.page} hasMore={list.hasMore} onChange={list.setPage} />
+      <SetPasswordDialog
+        invitation={passwordTarget}
+        onClose={() => setPasswordTarget(null)}
+        onDone={(message) => {
+          setPasswordTarget(null);
+          setNotice(message);
+        }}
+      />
       <CreateForClientDialog
         open={creating}
         onClose={() => setCreating(false)}

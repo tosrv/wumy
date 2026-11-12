@@ -121,6 +121,7 @@ Admins can list invitations and payments, mark an invitation as paid without a D
   - Creates a draft invitation (slug from the couple's names), optionally marks it paid, and logs both steps. The client fills it in and presses **Terbitkan**.
   - Optional: translate Supabase **Authentication → Emails → Invite user** (keep `{{ .ConfirmationURL }}`).
   - Needs `VITE_SITE_URL` on the server so the invite link points at the right domain.
+- **Set password** (row menu ⋯ on Invitations) sets a new password for the invitation's owner directly, for a client who can't use the reset email. It must meet the strong-password rules (there is a **Generate** button). The old password stops working immediately; the new one is never written to the activity log, only that it was changed. Admin accounts are refused. Share the password with the client privately and ask them to change it in **Settings**.
 - Requires `SUPABASE_SERVICE_ROLE_KEY` on the server.
 
 ## Payments (DOKU Checkout)
