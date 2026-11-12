@@ -136,6 +136,21 @@ const id = {
   musicStartFormat: "Format m:ss",
   musicUploadFailed: "Gagal mengunggah musik.",
   musicRemoveFailed: "Gagal menghapus musik.",
+  pickTemplate: "Pilih template terlebih dahulu.",
+  namesRequired: "Nama kedua mempelai wajib diisi.",
+  draftSaved: "Draf tersimpan.",
+  photoUploaded: "Foto berhasil diunggah.",
+  photosUploaded: "{n} foto berhasil diunggah.",
+  photoRemoved: "Foto dihapus.",
+  photoCapReached: "Galeri sudah berisi {n} foto, jumlah maksimal.",
+  photoStillTooLarge: "Foto masih terlalu besar setelah diperkecil. Coba foto lain.",
+  photosLoadFailed: "Gagal memuat foto.",
+  photoRemoveFailed: "Gagal menghapus foto.",
+  deleteFailed: "Gagal menghapus undangan.",
+  publishSuccess: "Undangan sudah tayang di /{slug}",
+  publishFailed: "Gagal menerbitkan undangan.",
+  paymentRequired: "Selesaikan pembayaran sebelum menerbitkan undangan.",
+  publishIncomplete: "Lengkapi data wajib undangan sebelum menerbitkan.",
 } as const;
 
 export type EditorStringKey = keyof typeof id;
@@ -276,10 +291,65 @@ const en: Record<EditorStringKey, string> = {
   musicStartFormat: "Format m:ss",
   musicUploadFailed: "Could not upload the music.",
   musicRemoveFailed: "Could not remove the music.",
+  pickTemplate: "Pick a template first.",
+  namesRequired: "Both partner names are required.",
+  draftSaved: "Draft saved.",
+  photoUploaded: "Photo uploaded.",
+  photosUploaded: "{n} photos uploaded.",
+  photoRemoved: "Photo removed.",
+  photoCapReached: "The gallery already has {n} photos, the maximum.",
+  photoStillTooLarge: "The photo is still too large after resizing. Try another photo.",
+  photosLoadFailed: "Failed to load photos.",
+  photoRemoveFailed: "Failed to remove photo.",
+  deleteFailed: "Failed to delete the invitation.",
+  publishSuccess: "Your invitation is live at /{slug}",
+  publishFailed: "Failed to publish the invitation.",
+  paymentRequired: "Complete payment before publishing.",
+  publishIncomplete: "Complete the required details before publishing.",
 };
 
 export const EDITOR_STRINGS: Record<Locale, Record<EditorStringKey, string>> = { id, en };
 
-export function t(locale: Locale, key: EditorStringKey): string {
-  return EDITOR_STRINGS[locale][key];
+export function t(
+  locale: Locale,
+  key: EditorStringKey,
+  params?: Record<string, string | number>,
+): string {
+  const text = EDITOR_STRINGS[locale][key];
+  if (!params) return text;
+  return text.replace(/\{(\w+)\}/g, (match, name: string) =>
+    name in params ? String(params[name]) : match,
+  );
+}
+
+/** An editor error whose message is a translatable string key. */
+export class EditorError extends Error {
+  constructor(
+    readonly key: EditorStringKey,
+    readonly params?: Record<string, string | number>,
+  ) {
+    super(key);
+    this.name = "EditorError";
+  }
+}
+
+// Known database errors (see supabase/schema.sql) mapped to editor strings.
+const KNOWN_ERRORS: [RegExp, EditorStringKey][] = [
+  [/payment required before publishing/i, "paymentRequired"],
+  [/at most (?<n>\d+) (?:gallery )?photos/i, "photoCapReached"],
+];
+
+/**
+ * User-facing text for an error thrown by editor actions. Unknown errors (network,
+ * database) get the localized `fallback`; the original is logged for debugging.
+ */
+export function editorErrorText(err: unknown, locale: Locale, fallback: EditorStringKey): string {
+  if (err instanceof EditorError) return t(locale, err.key, err.params);
+  const message = err instanceof Error ? err.message : "";
+  for (const [pattern, key] of KNOWN_ERRORS) {
+    const match = pattern.exec(message);
+    if (match) return t(locale, key, match.groups);
+  }
+  console.error(err);
+  return t(locale, fallback);
 }
