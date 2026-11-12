@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
+import { isStrongPassword } from "@/lib/password";
 import { createInvitationForClient, type AdminDb } from "./service";
 
 type Row = Record<string, unknown>;
@@ -15,8 +16,8 @@ function fakeDb(opts: {
     payments: [],
     admin_audit_log: [],
   };
-  const invite = vi.fn(async (email: string) => ({
-    data: { user: { id: "new-user", email } },
+  const createUser = vi.fn(async (attrs: { email: string }) => ({
+    data: { user: { id: "new-user", email: attrs.email } },
     error: null,
   }));
   const rpc = vi.fn(async () => ({ error: null }));
@@ -49,18 +50,19 @@ function fakeDb(opts: {
     auth: {
       admin: {
         listUsers: async () => ({ data: { users: opts.users ?? [] }, error: null }),
-        inviteUserByEmail: invite,
+        createUser,
       },
     },
     from: query,
     rpc,
   } as unknown as AdminDb;
-  return { db, tables, invite, rpc };
+  return { db, tables, createUser, rpc };
 }
 
 const deps = {
   slugFor: (a: string, b: string) => `${a}-${b}`.toLowerCase(),
   isReserved: (s: string) => s === "admin",
+  isStrong: isStrongPassword,
 };
 const input = {
   email: "Client@Example.com",
@@ -69,19 +71,22 @@ const input = {
   templateId: "minimal",
   markPaid: true,
   note: "Free invitation for a friend",
-  setPasswordUrl: "https://wumy.test/reset-password",
+  password: "Rahasia123!",
 };
 
 describe("createInvitationForClient", () => {
-  it("invites a new client, creates the draft, marks it paid, and logs it", async () => {
+  it("creates a confirmed account with the password, the draft, marks it paid, and logs it", async () => {
     const f = fakeDb({});
     const result = await createInvitationForClient(f.db, "admin-1", input, deps);
 
-    expect(f.invite).toHaveBeenCalledWith("client@example.com", {
-      redirectTo: "https://wumy.test/reset-password",
-      data: { full_name: "Ayu & Budi" },
+    expect(f.createUser).toHaveBeenCalledWith({
+      email: "client@example.com",
+      password: "Rahasia123!",
+      email_confirm: true,
+      user_metadata: { full_name: "Ayu & Budi" },
     });
-    expect(result).toMatchObject({ slug: "ayu-budi", invited: true, paid: true });
+    expect(result).toMatchObject({ slug: "ayu-budi", accountCreated: true, paid: true });
+    expect(JSON.stringify(f.tables["admin_audit_log"])).not.toContain("Rahasia123!");
     expect(f.tables["invitations"]![0]).toMatchObject({
       owner_id: "new-user",
       template_id: "minimal",
@@ -96,7 +101,7 @@ describe("createInvitationForClient", () => {
     ]);
   });
 
-  it("reuses an existing account without inviting, and picks a free slug", async () => {
+  it("reuses an existing account without changing its password, and picks a free slug", async () => {
     const f = fakeDb({
       users: [{ id: "u1", email: "client@example.com" }],
       invitations: [{ id: "other", owner_id: "someone", slug: "ayu-budi" }],
@@ -107,8 +112,8 @@ describe("createInvitationForClient", () => {
       { ...input, markPaid: false },
       deps,
     );
-    expect(f.invite).not.toHaveBeenCalled();
-    expect(result).toMatchObject({ slug: "ayu-budi-2", invited: false, paid: false });
+    expect(f.createUser).not.toHaveBeenCalled();
+    expect(result).toMatchObject({ slug: "ayu-budi-2", accountCreated: false, paid: false });
     expect(f.rpc).not.toHaveBeenCalled();
   });
 
@@ -120,6 +125,14 @@ describe("createInvitationForClient", () => {
     await expect(createInvitationForClient(f.db, "admin-1", input, deps)).rejects.toThrow(
       "already has an invitation (/rina-dimas)",
     );
+  });
+
+  it("rejects a weak password for a new account before creating it", async () => {
+    const f = fakeDb({});
+    await expect(
+      createInvitationForClient(f.db, "admin-1", { ...input, password: "rahasia123" }, deps),
+    ).rejects.toThrow("not strong enough");
+    expect(f.createUser).not.toHaveBeenCalled();
   });
 
   it("refuses an admin's email", async () => {

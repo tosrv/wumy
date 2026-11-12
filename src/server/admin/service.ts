@@ -276,15 +276,15 @@ export type CreateForClientInput = {
   templateId: string;
   markPaid: boolean;
   note: string;
-  /** Where the invite email sends the client to set a password. */
-  setPasswordUrl: string;
+  /** Password for a new account. Ignored when the email already has an account. */
+  password: string;
 };
 
 export type CreateForClientResult = {
   invitationId: string;
   slug: string;
-  /** True when a new account was created and an invite email was sent. */
-  invited: boolean;
+  /** True when a new account was created with `password`; false when an existing one was reused. */
+  accountCreated: boolean;
   paid: boolean;
 };
 
@@ -299,9 +299,9 @@ async function firstFreeSlug(db: AdminDb, candidates: string[]): Promise<string>
 
 /**
  * Creates (or reuses) a client account and a draft invitation for it, optionally
- * marking it paid. New accounts get a Supabase invite email to set their own password,
- * so the admin never handles the client's password. The client fills in and publishes
- * the invitation themselves.
+ * marking it paid. A new account is created directly with the admin-chosen password and
+ * its email marked confirmed, so no email is sent; the admin hands the login to the
+ * client. An existing account is reused and keeps its password.
  */
 export async function createInvitationForClient(
   db: AdminDb,
@@ -310,20 +310,28 @@ export async function createInvitationForClient(
   deps: {
     slugFor: (a: string, b: string) => string;
     isReserved: (slug: string) => boolean;
+    isStrong: (password: string) => boolean;
   },
 ): Promise<CreateForClientResult> {
   const email = input.email.trim().toLowerCase();
 
   let userId = await findUserIdByEmail(db, email);
-  let invited = false;
+  let accountCreated = false;
   if (!userId) {
-    const { data, error } = await db.auth.admin.inviteUserByEmail(email, {
-      redirectTo: input.setPasswordUrl,
-      data: { full_name: `${input.partnerA} & ${input.partnerB}` },
+    if (!deps.isStrong(input.password)) {
+      throw new AdminActionError(
+        "Password is not strong enough: use 8+ characters with upper and lower case, a number, and a symbol.",
+      );
+    }
+    const { data, error } = await db.auth.admin.createUser({
+      email,
+      password: input.password,
+      email_confirm: true,
+      user_metadata: { full_name: `${input.partnerA} & ${input.partnerB}` },
     });
-    if (error || !data.user) throw new Error(error?.message ?? "Invite failed");
+    if (error || !data.user) throw new Error(error?.message ?? "Could not create the account");
     userId = data.user.id;
-    invited = true;
+    accountCreated = true;
   } else {
     const { data: admin } = await db
       .from("admin_users")
@@ -373,7 +381,7 @@ export async function createInvitationForClient(
     action: "create_for_client",
     target_type: "invitation",
     target_id: invitation.id,
-    details: { email, slug, invited, note: input.note },
+    details: { email, slug, account_created: accountCreated, note: input.note },
   });
   if (logError) console.error("admin audit log failed", logError.message);
 
@@ -383,7 +391,7 @@ export async function createInvitationForClient(
     paid = true;
   }
 
-  return { invitationId: invitation.id, slug, invited, paid };
+  return { invitationId: invitation.id, slug, accountCreated, paid };
 }
 
 /**
