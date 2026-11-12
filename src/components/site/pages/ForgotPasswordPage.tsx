@@ -92,7 +92,7 @@ export function ForgotPasswordPage() {
               )}
               <button
                 type="submit"
-                disabled={busy}
+                disabled={busy || (captchaRequired && !captchaToken)}
                 className="self-start rounded-full bg-electric-lime px-7 py-3.5 font-label-btn text-label-btn text-charcoal disabled:opacity-50"
               >
                 {busy ? "Mengirim…" : "Kirim link reset"}
