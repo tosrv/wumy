@@ -338,6 +338,7 @@ function CreateForClientDialog({
   const [templateId, setTemplateId] = useState(invitationTemplates[0]?.id ?? "");
   const [markPaid, setMarkPaid] = useState(true);
   const [note, setNote] = useState("");
+  const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -349,6 +350,7 @@ function CreateForClientDialog({
     setTemplateId(invitationTemplates[0]?.id ?? "");
     setMarkPaid(true);
     setNote("");
+    setPassword("");
     setError(null);
   }, [open]);
 
@@ -361,10 +363,15 @@ function CreateForClientDialog({
       setError("Add a short reason (at least 3 characters).");
       return;
     }
+    if (!isStrongPassword(password)) {
+      setError("Set a password that meets all the requirements.");
+      return;
+    }
     setBusy(true);
     setError(null);
     try {
       const result = await createInvitationForClient({
+        password,
         email: email.trim(),
         partnerA: partnerA.trim(),
         partnerB: partnerB.trim(),
@@ -378,9 +385,9 @@ function CreateForClientDialog({
       }
       onDone(
         `Created /${result.slug}${result.paid ? " (paid)" : ""}. ` +
-          (result.invited
-            ? `An invite email was sent to ${email.trim()} to set a password.`
-            : `${email.trim()} already had an account; they can sign in as usual.`),
+          (result.accountCreated
+            ? `Account ${email.trim()} was created with the password you set. Share the login with the client privately.`
+            : `${email.trim()} already had an account; it keeps its current password.`),
       );
     } catch (err) {
       console.error(err);
@@ -396,8 +403,9 @@ function CreateForClientDialog({
         <DialogHeader>
           <DialogTitle>Create invitation for a client</DialogTitle>
           <DialogDescription>
-            Creates the client&apos;s account (they get an email to set their own password) and a
-            draft invitation. The client fills it in and publishes it.
+            Creates the client&apos;s account with the password below (no email is sent) and a draft
+            invitation. Share the login with the client; they fill in and publish the invitation. If
+            the email already has an account, it is reused and keeps its password.
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-3">
@@ -410,6 +418,28 @@ function CreateForClientDialog({
               onChange={(e) => setEmail(e.target.value)}
               placeholder="client@example.com"
             />
+          </div>
+          <div className="grid gap-1.5">
+            <Label htmlFor="cfc-password">Password for the client</Label>
+            <div className="flex gap-2">
+              <div className="flex-1">
+                <PasswordInput
+                  id="cfc-password"
+                  styled
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  autoComplete="new-password"
+                />
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setPassword(generateStrongPassword())}
+              >
+                Generate
+              </Button>
+            </div>
+            <PasswordRequirements password={password} lang="en" />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="grid gap-1.5">
