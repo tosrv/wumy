@@ -116,6 +116,11 @@ Admins can list invitations and payments, mark an invitation as paid without a D
 - Use a **separate account** for admin (e.g. `admin@…`), not your personal or test account. Admins are sent to `/admin` after login, and `/dashboard`, `/editor`, and `/order` redirect them there, so an admin account never gets an invitation of its own.
 - Every admin action goes through a server function (`src/server/admin/`) that checks the session and `admin_users` first. Non-admins and signed-out visitors get the normal 404 page.
 - **Mark as paid** records a Rp0 `manual` payment and runs `mark_invitation_paid` (the same path as the DOKU webhook). It does not publish; the owner still presses **Terbitkan**. A reason is required and written to the activity log.
+- **Create for client** (Invitations page) sets up an invitation for a client who asked you to, or a free/promo one:
+  - If the email has no account yet, Supabase sends an **invite email**; the client sets their own password at `/reset-password` (already in Redirect URLs), so the admin never handles it. An existing account is reused, unless it already has an invitation or is an admin.
+  - Creates a draft invitation (slug from the couple's names), optionally marks it paid, and logs both steps. The client fills it in and presses **Terbitkan**.
+  - Optional: translate Supabase **Authentication → Emails → Invite user** (keep `{{ .ConfirmationURL }}`).
+  - Needs `VITE_SITE_URL` on the server so the invite link points at the right domain.
 - Requires `SUPABASE_SERVICE_ROLE_KEY` on the server.
 
 ## Payments (DOKU Checkout)

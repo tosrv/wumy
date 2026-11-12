@@ -3,6 +3,7 @@ import { Outlet } from "@tanstack/react-router";
 import { useAuth } from "@/lib/auth";
 import {
   checkIsAdmin,
+  createInvitationForClient,
   fetchAdminAuditLog,
   fetchAdminInvitations,
   fetchAdminPayments,
@@ -32,6 +33,9 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
+import { invitationTemplates } from "@/data/templates";
 
 const dateFormat = new Intl.DateTimeFormat("en-GB", {
   day: "numeric",
@@ -218,8 +222,151 @@ function PageBody({ children }: { children: ReactNode }) {
   );
 }
 
+function CreateForClientDialog({
+  open,
+  onClose,
+  onDone,
+}: {
+  open: boolean;
+  onClose: () => void;
+  onDone: (message: string) => void;
+}) {
+  const [email, setEmail] = useState("");
+  const [partnerA, setPartnerA] = useState("");
+  const [partnerB, setPartnerB] = useState("");
+  const [templateId, setTemplateId] = useState(invitationTemplates[0]?.id ?? "");
+  const [markPaid, setMarkPaid] = useState(true);
+  const [note, setNote] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    setEmail("");
+    setPartnerA("");
+    setPartnerB("");
+    setTemplateId(invitationTemplates[0]?.id ?? "");
+    setMarkPaid(true);
+    setNote("");
+    setError(null);
+  }, [open]);
+
+  async function submit() {
+    if (!email.trim() || !partnerA.trim() || !partnerB.trim()) {
+      setError("Email and both names are required.");
+      return;
+    }
+    if (note.trim().length < 3) {
+      setError("Add a short reason (at least 3 characters).");
+      return;
+    }
+    setBusy(true);
+    setError(null);
+    try {
+      const result = await createInvitationForClient({
+        email: email.trim(),
+        partnerA: partnerA.trim(),
+        partnerB: partnerB.trim(),
+        templateId,
+        markPaid,
+        note: note.trim(),
+      });
+      if ("error" in result) {
+        setError(result.error);
+        return;
+      }
+      onDone(
+        `Created /${result.slug}${result.paid ? " (paid)" : ""}. ` +
+          (result.invited
+            ? `An invite email was sent to ${email.trim()} to set a password.`
+            : `${email.trim()} already had an account; they can sign in as usual.`),
+      );
+    } catch (err) {
+      console.error(err);
+      setError("Failed to create the invitation. Check the email and try again.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={(next) => !next && onClose()}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Create invitation for a client</DialogTitle>
+          <DialogDescription>
+            Creates the client&apos;s account (they get an email to set their own password) and a
+            draft invitation. The client fills it in and publishes it.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="grid gap-3">
+          <div className="grid gap-1.5">
+            <Label htmlFor="cfc-email">Client email</Label>
+            <Input
+              id="cfc-email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="client@example.com"
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="grid gap-1.5">
+              <Label htmlFor="cfc-a">Partner 1</Label>
+              <Input id="cfc-a" value={partnerA} onChange={(e) => setPartnerA(e.target.value)} />
+            </div>
+            <div className="grid gap-1.5">
+              <Label htmlFor="cfc-b">Partner 2</Label>
+              <Input id="cfc-b" value={partnerB} onChange={(e) => setPartnerB(e.target.value)} />
+            </div>
+          </div>
+          <div className="grid gap-1.5">
+            <Label htmlFor="cfc-template">Template</Label>
+            <select
+              id="cfc-template"
+              value={templateId}
+              onChange={(e) => setTemplateId(e.target.value)}
+              className="h-9 rounded-md border border-input bg-transparent px-3 text-sm shadow-sm"
+            >
+              {invitationTemplates.map((tpl) => (
+                <option key={tpl.id} value={tpl.id}>
+                  {tpl.name}
+                </option>
+              ))}
+            </select>
+          </div>
+          <label className="flex items-center gap-2 text-sm">
+            <Checkbox checked={markPaid} onCheckedChange={(v) => setMarkPaid(v === true)} />
+            Mark as paid (Rp0 manual payment)
+          </label>
+          <div className="grid gap-1.5">
+            <Label htmlFor="cfc-note">Reason</Label>
+            <Textarea
+              id="cfc-note"
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              placeholder="e.g. free invitation for a friend, promo, client asked us to set it up"
+              maxLength={500}
+            />
+          </div>
+        </div>
+        {error && <p className="text-sm text-destructive">{error}</p>}
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose} disabled={busy}>
+            Cancel
+          </Button>
+          <Button onClick={() => void submit()} disabled={busy}>
+            {busy ? "Creating…" : "Create invitation"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 export function AdminInvitationsPage() {
   const [notice, setNotice] = useState<string | null>(null);
+  const [creating, setCreating] = useState(false);
   const [searchInput, setSearchInput] = useState("");
   const [search, setSearch] = useState("");
   const [target, setTarget] = useState<AdminInvitation | null>(null);
@@ -240,24 +387,27 @@ export function AdminInvitationsPage() {
           </button>
         </div>
       )}
-      <form
-        className="mb-4 flex gap-2"
-        onSubmit={(e) => {
-          e.preventDefault();
-          list.setPage(0);
-          setSearch(searchInput.trim());
-        }}
-      >
-        <Input
-          value={searchInput}
-          onChange={(e) => setSearchInput(e.target.value)}
-          placeholder="Search by slug"
-          className="max-w-xs"
-        />
-        <Button type="submit" variant="outline">
-          Search
-        </Button>
-      </form>
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+        <form
+          className="flex gap-2"
+          onSubmit={(e) => {
+            e.preventDefault();
+            list.setPage(0);
+            setSearch(searchInput.trim());
+          }}
+        >
+          <Input
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            placeholder="Search by slug"
+            className="max-w-xs"
+          />
+          <Button type="submit" variant="outline">
+            Search
+          </Button>
+        </form>
+        <Button onClick={() => setCreating(true)}>Create for client</Button>
+      </div>
       <ListState loading={list.loading} error={list.error} empty={list.rows.length === 0}>
         <div className="overflow-x-auto">
           <Table>
@@ -316,6 +466,15 @@ export function AdminInvitationsPage() {
         </div>
       </ListState>
       <Pager page={list.page} hasMore={list.hasMore} onChange={list.setPage} />
+      <CreateForClientDialog
+        open={creating}
+        onClose={() => setCreating(false)}
+        onDone={(message) => {
+          setCreating(false);
+          setNotice(message);
+          void list.reload();
+        }}
+      />
       <MarkPaidDialog
         invitation={target}
         onClose={() => setTarget(null)}
