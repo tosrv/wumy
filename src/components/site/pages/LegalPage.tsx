@@ -23,9 +23,7 @@ export function LegalPage({ title, summary, updated, sections }: LegalPageProps)
         <h1 className="mt-3 font-headline-xl text-headline-xl tracking-tight text-charcoal">
           {title}
         </h1>
-        <p className="mt-4 font-body-lg text-body-lg text-text-muted leading-relaxed">
-          {summary}
-        </p>
+        <p className="mt-4 font-body-lg text-body-lg text-text-muted leading-relaxed">{summary}</p>
 
         <div className="mt-space-2xl space-y-space-xl">
           {sections.map((section) => (

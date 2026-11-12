@@ -15,10 +15,7 @@ import {
   type RsvpSort,
   type RsvpStatusFilter,
 } from "@/components/dashboard/sections/RsvpFilters";
-import {
-  RsvpFeed,
-  type RsvpFeedItem,
-} from "@/components/dashboard/sections/RsvpFeed";
+import { RsvpFeed, type RsvpFeedItem } from "@/components/dashboard/sections/RsvpFeed";
 
 type RsvpRow = Database["public"]["Tables"]["rsvps"]["Row"];
 
@@ -87,9 +84,7 @@ export function RsvpPage() {
         .filter(Boolean),
     );
     const respondedNames = new Set(
-      rsvps
-        .filter((r) => r.status !== "pending")
-        .map((r) => r.guest_name.trim().toLowerCase()),
+      rsvps.filter((r) => r.status !== "pending").map((r) => r.guest_name.trim().toLowerCase()),
     );
 
     const fromRsvps: RsvpFeedItem[] = rsvps.map((r) => {
@@ -114,8 +109,7 @@ export function RsvpPage() {
           (r) =>
             r.status === "pending" &&
             (r.guest_id === g.id ||
-              r.guest_name.trim().toLowerCase() ===
-                g.name.trim().toLowerCase()),
+              r.guest_name.trim().toLowerCase() === g.name.trim().toLowerCase()),
         );
       })
       .map((g) => ({
@@ -134,16 +128,11 @@ export function RsvpPage() {
 
   const attendingPax = useMemo(
     () =>
-      feedItems
-        .filter((i) => i.status === "attending")
-        .reduce((sum, i) => sum + i.partySize, 0),
+      feedItems.filter((i) => i.status === "attending").reduce((sum, i) => sum + i.partySize, 0),
     [feedItems],
   );
   const declinedPax = useMemo(
-    () =>
-      feedItems
-        .filter((i) => i.status === "declined")
-        .reduce((sum, i) => sum + i.partySize, 0),
+    () => feedItems.filter((i) => i.status === "declined").reduce((sum, i) => sum + i.partySize, 0),
     [feedItems],
   );
   const pendingCount = feedItems.filter((i) => i.status === "pending").length;
@@ -176,13 +165,9 @@ export function RsvpPage() {
 
     rows = [...rows].sort((a, b) => {
       if (sort === "newest")
-        return (
-          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-        );
+        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
       if (sort === "oldest")
-        return (
-          new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-        );
+        return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
       if (sort === "pax-high") return b.partySize - a.partySize;
       return a.partySize - b.partySize;
     });
@@ -255,13 +240,9 @@ export function RsvpPage() {
           onExport={handleExport}
         />
 
-        {loading && (
-          <p className="text-sm text-muted-foreground">Loading RSVPs…</p>
-        )}
+        {loading && <p className="text-sm text-muted-foreground">Loading RSVPs…</p>}
         {error && (
-          <p className="rounded-xl bg-destructive/10 px-4 py-3 text-sm text-destructive">
-            {error}
-          </p>
+          <p className="rounded-xl bg-destructive/10 px-4 py-3 text-sm text-destructive">{error}</p>
         )}
 
         <RsvpMetrics metrics={metrics} />

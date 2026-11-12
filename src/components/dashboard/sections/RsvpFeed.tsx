@@ -1,12 +1,5 @@
 import { useState } from "react";
-import {
-  Check,
-  ChevronLeft,
-  ChevronRight,
-  Copy,
-  Quote,
-  UtensilsCrossed,
-} from "lucide-react";
+import { Check, ChevronLeft, ChevronRight, Copy, Quote, UtensilsCrossed } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export type RsvpFeedItem = {
@@ -104,11 +97,7 @@ export function RsvpFeed({
     }
     pages.push(1);
     if (page > 3) pages.push("…");
-    for (
-      let i = Math.max(2, page - 1);
-      i <= Math.min(totalPages - 1, page + 1);
-      i++
-    ) {
+    for (let i = Math.max(2, page - 1); i <= Math.min(totalPages - 1, page + 1); i++) {
       pages.push(i);
     }
     if (page < totalPages - 2) pages.push("…");
@@ -164,12 +153,9 @@ export function RsvpFeed({
                 <span
                   className={cn(
                     "inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold",
-                    item.status === "attending" &&
-                      "bg-accent/80 text-accent-foreground",
-                    item.status === "declined" &&
-                      "bg-secondary text-muted-foreground",
-                    item.status === "pending" &&
-                      "bg-secondary text-foreground",
+                    item.status === "attending" && "bg-accent/80 text-accent-foreground",
+                    item.status === "declined" && "bg-secondary text-muted-foreground",
+                    item.status === "pending" && "bg-secondary text-foreground",
                   )}
                 >
                   <span
@@ -217,9 +203,7 @@ export function RsvpFeed({
                 <Quote
                   className={cn(
                     "mt-0.5 size-6 shrink-0",
-                    item.status === "declined"
-                      ? "text-muted-foreground"
-                      : "text-accent",
+                    item.status === "declined" ? "text-muted-foreground" : "text-accent",
                   )}
                 />
                 <p className="flex-1 text-sm italic leading-relaxed text-foreground">
@@ -238,8 +222,7 @@ export function RsvpFeed({
             <strong className="text-foreground">
               {from} – {to}
             </strong>{" "}
-            of <strong className="text-foreground">{totalFiltered}</strong>{" "}
-            responses
+            of <strong className="text-foreground">{totalFiltered}</strong> responses
           </span>
           <span>•</span>
           <label className="flex items-center gap-1.5">
@@ -268,10 +251,7 @@ export function RsvpFeed({
           </button>
           {pageButtons.map((p, i) =>
             p === "…" ? (
-              <span
-                key={`ellipsis-${i}`}
-                className="px-1 font-bold text-muted-foreground"
-              >
+              <span key={`ellipsis-${i}`} className="px-1 font-bold text-muted-foreground">
                 …
               </span>
             ) : (

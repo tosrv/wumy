@@ -65,9 +65,7 @@ export function EditorShell({
               <span className="opacity-50">/</span>
               <span>Invitation</span>
               <span className="opacity-50">/</span>
-              <span className="truncate font-semibold text-foreground">
-                {coupleLabel}
-              </span>
+              <span className="truncate font-semibold text-foreground">{coupleLabel}</span>
             </div>
           </div>
 
@@ -83,9 +81,7 @@ export function EditorShell({
               <span
                 className={cn(
                   "size-1.5 rounded-full",
-                  status === "published"
-                    ? "bg-[oklch(0.45_0.1_160)]"
-                    : "bg-muted-foreground",
+                  status === "published" ? "bg-[oklch(0.45_0.1_160)]" : "bg-muted-foreground",
                 )}
               />
               {status}

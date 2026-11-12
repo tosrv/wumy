@@ -69,8 +69,7 @@ export function GuestsTable({
   onAdd,
 }: GuestsTableProps) {
   const [copiedId, setCopiedId] = useState<string | null>(null);
-  const allOnPageSelected =
-    guests.length > 0 && guests.every((g) => selectedIds.has(g.id));
+  const allOnPageSelected = guests.length > 0 && guests.every((g) => selectedIds.has(g.id));
   const totalPages = Math.max(1, Math.ceil(totalFiltered / pageSize));
   const from = totalFiltered === 0 ? 0 : (page - 1) * pageSize + 1;
   const to = Math.min(page * pageSize, totalFiltered);
@@ -107,9 +106,7 @@ export function GuestsTable({
   function openWhatsApp(guest: GuestListItem) {
     if (!invitation) return;
     const link = guestPublicUrl(invitation.slug, guest);
-    const text = encodeURIComponent(
-      `Hi ${guest.name}! You're invited — ${link}`,
-    );
+    const text = encodeURIComponent(`Hi ${guest.name}! You're invited — ${link}`);
     window.open(`https://wa.me/?text=${text}`, "_blank", "noopener,noreferrer");
   }
 
@@ -121,11 +118,7 @@ export function GuestsTable({
     }
     pages.push(1);
     if (page > 3) pages.push("…");
-    for (
-      let i = Math.max(2, page - 1);
-      i <= Math.min(totalPages - 1, page + 1);
-      i++
-    ) {
+    for (let i = Math.max(2, page - 1); i <= Math.min(totalPages - 1, page + 1); i++) {
       pages.push(i);
     }
     if (page < totalPages - 2) pages.push("…");
@@ -139,9 +132,7 @@ export function GuestsTable({
         <div className="flex flex-col items-start justify-between gap-2 bg-accent px-3.5 py-2.5 text-accent-foreground sm:flex-row sm:items-center">
           <div className="flex items-center gap-2">
             <CheckCircle2 className="size-4" />
-            <span className="text-sm font-bold">
-              {selectedIds.size} guests selected
-            </span>
+            <span className="text-sm font-bold">{selectedIds.size} guests selected</span>
           </div>
           <div className="flex flex-wrap items-center gap-1">
             <Button
@@ -188,16 +179,14 @@ export function GuestsTable({
           </div>
           <h3 className="text-lg font-bold text-foreground">No guests found</h3>
           <p className="mt-1 max-w-sm text-sm text-muted-foreground">
-            Try adjusting your filter tags or search keyword, or quickly add a
-            new attendee.
+            Try adjusting your filter tags or search keyword, or quickly add a new attendee.
           </p>
           <Button
             type="button"
             className="mt-4 h-9 rounded-xl bg-accent font-bold text-accent-foreground shadow-sm hover:bg-accent/90"
             onClick={onAdd}
           >
-            <UserPlus className="size-4" />
-            + Add your first guest
+            <UserPlus className="size-4" />+ Add your first guest
           </Button>
         </div>
       ) : (
@@ -224,16 +213,11 @@ export function GuestsTable({
                   ? guestPublicLink(invitation.slug, guest)
                   : guest.personalization_key || "—";
                 return (
-                  <tr
-                    key={guest.id}
-                    className="transition-colors hover:bg-secondary/40"
-                  >
+                  <tr key={guest.id} className="transition-colors hover:bg-secondary/40">
                     <td className="py-3.5 pl-3.5 pr-2 text-center">
                       <Checkbox
                         checked={selectedIds.has(guest.id)}
-                        onCheckedChange={(v) =>
-                          toggleOne(guest.id, v === true)
-                        }
+                        onCheckedChange={(v) => toggleOne(guest.id, v === true)}
                         aria-label={`Select ${guest.name}`}
                       />
                     </td>
@@ -359,10 +343,7 @@ export function GuestsTable({
           </button>
           {pageButtons.map((p, i) =>
             p === "…" ? (
-              <span
-                key={`ellipsis-${i}`}
-                className="px-1 text-xs text-muted-foreground"
-              >
+              <span key={`ellipsis-${i}`} className="px-1 text-xs text-muted-foreground">
                 …
               </span>
             ) : (

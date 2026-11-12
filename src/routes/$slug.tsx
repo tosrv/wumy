@@ -25,8 +25,7 @@ export const Route = createFileRoute("/$slug")({
     }
   },
   component: PublicSlugPage,
-  loader: ({ params }) =>
-    getInvitationShareMeta({ data: { slug: params.slug } }).catch(() => null),
+  loader: ({ params }) => getInvitationShareMeta({ data: { slug: params.slug } }).catch(() => null),
   head: ({ params, match, loaderData }) => {
     const to = (match.search as InviteSearch).to;
     const path = to ? `/${params.slug}?to=${encodeURIComponent(to)}` : `/${params.slug}`;

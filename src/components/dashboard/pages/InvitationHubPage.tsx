@@ -45,10 +45,7 @@ export function InvitationHubPage() {
     return (
       <main className="flex min-h-[40vh] flex-col items-center justify-center gap-3 px-6 text-center">
         <p className="text-sm text-destructive">{error}</p>
-        <Link
-          to="/dashboard"
-          className="text-sm font-semibold hover:text-muted-foreground"
-        >
+        <Link to="/dashboard" className="text-sm font-semibold hover:text-muted-foreground">
           ← Back to overview
         </Link>
       </main>
