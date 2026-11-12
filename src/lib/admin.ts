@@ -4,6 +4,7 @@ import {
   adminListAuditLog,
   adminListInvitations,
   adminListPayments,
+  adminChangeInvitationTemplate,
   adminCreateInvitationForClient,
   adminMarkInvitationPaid,
   adminSetClientPassword,
@@ -106,4 +107,10 @@ export function generateStrongPassword(): string {
     [chars[i], chars[j]] = [chars[j]!, chars[i]!];
   }
   return chars.join("");
+}
+
+export async function changeInvitationTemplateAsAdmin(invitationId: string, templateId: string) {
+  return adminChangeInvitationTemplate({
+    data: { accessToken: await requireToken(), invitationId, templateId },
+  });
 }

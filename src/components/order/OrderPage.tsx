@@ -1,6 +1,8 @@
 import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { getTemplateById, invitationTemplates } from "@/data/templates";
+import { Link } from "@tanstack/react-router";
+import { Check } from "lucide-react";
+import { getCategoryById, getTemplateById, invitationTemplates } from "@/data/templates";
 import type { InvitationRow } from "@/lib/invitations";
 import { checkoutErrorMessage, startPublishCheckout, usePaymentConfig } from "@/lib/billing";
 import { formatIdr } from "@/lib/pricing";
@@ -10,13 +12,21 @@ import { track } from "@/lib/analytics";
 export const REFUND_NOTE =
   "Refund penuh selama undangan belum pernah tayang, paling lambat 7 hari setelah pembayaran, apa pun alasannya.";
 
+/** What every invitation includes, shown under the chosen template. */
+const INCLUDED = [
+  "Undangan online dengan alamat sendiri (wumy.my.id/nama-kalian)",
+  "Link personal untuk setiap tamu",
+  "RSVP dan ucapan dari tamu",
+  "Galeri foto, musik latar, dan info hadiah",
+];
+
 interface OrderPageProps {
   invitation: InvitationRow;
-  onTemplateChange: (templateId: string) => void;
 }
 
-export function OrderPage({ invitation, onTemplateChange }: OrderPageProps) {
+export function OrderPage({ invitation }: OrderPageProps) {
   const template = getTemplateById(invitation.template_id) ?? invitationTemplates[0]!;
+  const category = getCategoryById(template.categoryId);
   const { available, priceIdr } = usePaymentConfig();
   const [paying, setPaying] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -50,22 +60,38 @@ export function OrderPage({ invitation, onTemplateChange }: OrderPageProps) {
             className="aspect-[3/4] w-full object-cover object-top"
           />
           <div className="flex flex-col gap-3 p-4">
-            <p className="font-semibold">{template.name}</p>
-            <label className="flex flex-col gap-1 text-sm">
-              <span className="text-muted-foreground">Ganti template</span>
-              <select
-                className="h-10 rounded-lg border border-border bg-background px-3"
-                value={template.id}
-                disabled={paying}
-                onChange={(e) => onTemplateChange(e.target.value)}
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                  Template{category ? ` · ${category.label}` : ""}
+                </p>
+                <p className="font-display text-xl font-bold">{template.name}</p>
+              </div>
+              <Link
+                to="/demo/$templateId"
+                params={{ templateId: template.id }}
+                className="shrink-0 text-sm font-semibold underline underline-offset-2"
               >
-                {invitationTemplates.map((t) => (
-                  <option key={t.id} value={t.id}>
-                    {t.name}
-                  </option>
-                ))}
-              </select>
-            </label>
+                Lihat demo
+              </Link>
+            </div>
+            <p className="text-sm text-muted-foreground">{template.vibe}</p>
+            <ul className="flex flex-col gap-1.5 text-sm">
+              {INCLUDED.map((item) => (
+                <li key={item} className="flex items-start gap-2">
+                  <Check className="mt-0.5 size-4 shrink-0 text-accent-foreground" />
+                  <span>{item}</span>
+                </li>
+              ))}
+            </ul>
+            {!paying && (
+              <Link
+                to="/product"
+                className="self-start text-sm text-muted-foreground underline underline-offset-2 hover:text-foreground"
+              >
+                Pilih template lain
+              </Link>
+            )}
           </div>
         </div>
 

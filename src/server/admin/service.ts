@@ -43,6 +43,7 @@ export type AdminInvitation = {
   partnerB: string;
   ownerId: string;
   ownerEmail: string | null;
+  templateId: string;
   status: InvitationStatus;
   paymentStatus: PaymentStatus;
   publishedAt: string | null;
@@ -96,7 +97,7 @@ export async function listInvitations(
   let query = db
     .from("invitations")
     .select(
-      "id, slug, partner_a_name, partner_b_name, owner_id, status, payment_status, published_at, created_at",
+      "id, slug, partner_a_name, partner_b_name, owner_id, template_id, status, payment_status, published_at, created_at",
     )
     .order("created_at", { ascending: false })
     .range(from, from + ADMIN_PAGE_SIZE); // one extra row tells us if there is a next page
@@ -119,6 +120,7 @@ export async function listInvitations(
       partnerB: r.partner_b_name,
       ownerId: r.owner_id,
       ownerEmail: emails.get(r.owner_id) ?? null,
+      templateId: r.template_id,
       status: r.status,
       paymentStatus: r.payment_status,
       publishedAt: r.published_at,
@@ -445,4 +447,41 @@ export async function setClientPassword(
   if (logError) console.error("admin audit log failed", logError.message);
 
   return { email };
+}
+
+/** Switches an invitation's template (theme) for a client. Content is kept; it's only the look. */
+export async function changeInvitationTemplate(
+  db: AdminDb,
+  adminId: string,
+  invitationId: string,
+  templateId: string,
+  templateExists: (id: string) => boolean,
+): Promise<{ changed: boolean }> {
+  if (!templateExists(templateId)) throw new AdminActionError("Unknown template.");
+
+  const { data: invitation, error } = await db
+    .from("invitations")
+    .select("id, slug, template_id")
+    .eq("id", invitationId)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  if (!invitation) throw new AdminActionError("Invitation not found.");
+  if (invitation.template_id === templateId) return { changed: false };
+
+  const { error: updateError } = await db
+    .from("invitations")
+    .update({ template_id: templateId })
+    .eq("id", invitationId);
+  if (updateError) throw new Error(updateError.message);
+
+  const { error: logError } = await db.from("admin_audit_log").insert({
+    admin_id: adminId,
+    action: "change_template",
+    target_type: "invitation",
+    target_id: invitationId,
+    details: { slug: invitation.slug, from: invitation.template_id, to: templateId },
+  });
+  if (logError) console.error("admin audit log failed", logError.message);
+
+  return { changed: true };
 }
