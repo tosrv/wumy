@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState, type ReactNode } from "react";
-import { Link } from "@tanstack/react-router";
+import { useRouter } from "@tanstack/react-router";
 import { useAuth } from "@/lib/auth";
 import {
   checkIsAdmin,
@@ -416,7 +416,8 @@ function ActivityTab({ refreshKey }: { refreshKey: number }) {
 }
 
 export function AdminPage() {
-  const { user, loading } = useAuth();
+  const { user, loading, signOut } = useAuth();
+  const router = useRouter();
   const [access, setAccess] = useState<"checking" | "admin" | "denied">("checking");
   const [notice, setNotice] = useState<string | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
@@ -451,9 +452,18 @@ export function AdminPage() {
       <header className="border-b">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
           <h1 className="font-display text-xl font-bold">WUMY Admin</h1>
-          <Link to="/dashboard" className="text-sm text-muted-foreground hover:text-foreground">
-            Back to dashboard
-          </Link>
+          <div className="flex items-center gap-3 text-sm">
+            <span className="hidden text-muted-foreground sm:inline">{user?.email}</span>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                void signOut().then(() => router.navigate({ to: "/login" }));
+              }}
+            >
+              Sign out
+            </Button>
+          </div>
         </div>
       </header>
       <main className="mx-auto max-w-6xl px-4 py-6">
