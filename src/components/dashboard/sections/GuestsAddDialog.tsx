@@ -34,11 +34,7 @@ interface GuestsAddDialogProps {
   onSave: (input: NewGuestInput) => Promise<void>;
 }
 
-export function GuestsAddDialog({
-  open,
-  onOpenChange,
-  onSave,
-}: GuestsAddDialogProps) {
+export function GuestsAddDialog({ open, onOpenChange, onSave }: GuestsAddDialogProps) {
   const [name, setName] = useState("");
   const [group, setGroup] = useState<string>("General");
   const [plusOnes, setPlusOnes] = useState("0");
@@ -76,10 +72,7 @@ export function GuestsAddDialog({
         email: phone.trim() || null,
         personalizationKey: guestPersonalizationKey(trimmed),
         group,
-        note:
-          noteParts.length > 0
-            ? noteParts.join(" · ")
-            : "Personalized link ready",
+        note: noteParts.length > 0 ? noteParts.join(" · ") : "Personalized link ready",
       });
       reset();
       onOpenChange(false);
@@ -100,9 +93,7 @@ export function GuestsAddDialog({
     >
       <DialogContent className="max-w-md gap-4 rounded-xl">
         <DialogHeader>
-          <DialogTitle className="font-display text-lg font-bold">
-            Add New Guest
-          </DialogTitle>
+          <DialogTitle className="font-display text-lg font-bold">Add New Guest</DialogTitle>
         </DialogHeader>
 
         <div className="flex flex-col gap-3">

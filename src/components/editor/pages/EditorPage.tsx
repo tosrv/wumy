@@ -6,7 +6,7 @@ import { Trash2 } from "lucide-react";
 import { getTemplateById } from "@/data/templates";
 import {
   MAX_INVITATION_PHOTOS,
-  MAX_PHOTO_BYTES,
+  MAX_PHOTO_INPUT_BYTES,
   deleteInvitation,
   deleteInvitationPhoto,
   listInvitationPhotos,
@@ -317,9 +317,9 @@ export function EditorPage({ userId, invitation }: EditorPageProps) {
       return;
     }
     const nextFiles = Array.from(files).slice(0, remaining);
-    const tooBig = nextFiles.find((file) => file.size > MAX_PHOTO_BYTES);
+    const tooBig = nextFiles.find((file) => file.size > MAX_PHOTO_INPUT_BYTES);
     if (tooBig) {
-      setError("Each photo must be under 5MB.");
+      setError("Each photo must be under 20MB.");
       return;
     }
 

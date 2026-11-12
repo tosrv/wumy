@@ -24,7 +24,7 @@ Stack: TanStack Start (React, SSR, Vite, Nitro → Vercel), Supabase (Postgres, 
 | `npm run lint` | ESLint + Prettier |
 | `npx tsc --noEmit` | Type check |
 
-Before committing, run at least `npx tsc --noEmit` and `npm test`, and make sure the files you changed introduce no new lint errors. Some older files still have Prettier errors; don't reformat whole files unless asked.
+Before committing, run `npx tsc --noEmit`, `npm test`, and `npm run lint` (0 errors; `npm run format` fixes Prettier issues). CI (`.github/workflows/ci.yml`) runs the same three checks on every PR and push to `dev`/`main`.
 
 ## Structure
 

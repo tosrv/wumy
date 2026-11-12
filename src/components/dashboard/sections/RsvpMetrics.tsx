@@ -15,9 +15,7 @@ export function RsvpMetrics({ metrics }: RsvpMetricsProps) {
           key={metric.label}
           className="flex flex-col justify-between gap-4 rounded-xl bg-card p-6 shadow-sm transition-shadow hover:shadow-md"
         >
-          <span className="text-xs font-medium text-muted-foreground">
-            {metric.label}
-          </span>
+          <span className="text-xs font-medium text-muted-foreground">{metric.label}</span>
           <span className="font-display text-4xl font-extrabold tracking-tight text-foreground">
             {metric.value}
           </span>

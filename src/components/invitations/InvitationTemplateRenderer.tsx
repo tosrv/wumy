@@ -22,9 +22,7 @@ const RENDERERS = {
 
 export type RenderableTemplateId = keyof typeof RENDERERS;
 
-export function hasInvitationRenderer(
-  templateId: string,
-): templateId is RenderableTemplateId {
+export function hasInvitationRenderer(templateId: string): templateId is RenderableTemplateId {
   return templateId in RENDERERS;
 }
 
@@ -76,18 +74,14 @@ export function InvitationTemplateRenderer({
           {data.partnerAName} & {data.partnerBName}
         </h1>
         {data.guestName && (
-          <p className="mt-4 text-sm text-[oklch(0.16_0_0/0.65)]">
-            Dear {data.guestName},
-          </p>
+          <p className="mt-4 text-sm text-[oklch(0.16_0_0/0.65)]">Dear {data.guestName},</p>
         )}
         <p className="mt-6 text-base text-[oklch(0.16_0_0/0.7)]">
           {data.weddingDateLabel}
           {data.venueName ? ` · ${data.venueName}` : ""}
         </p>
         {data.story && (
-          <p className="mt-8 text-sm leading-relaxed text-[oklch(0.16_0_0/0.6)]">
-            {data.story}
-          </p>
+          <p className="mt-8 text-sm leading-relaxed text-[oklch(0.16_0_0/0.6)]">{data.story}</p>
         )}
       </div>
       {invitationId && onSubmitRsvp && (

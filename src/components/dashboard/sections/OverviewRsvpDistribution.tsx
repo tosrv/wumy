@@ -12,8 +12,7 @@ export function OverviewRsvpDistribution({
   declined,
 }: OverviewRsvpDistributionProps) {
   const total = attending + pending + declined;
-  const pct = (value: number) =>
-    total === 0 ? 0 : Math.round((value / total) * 100);
+  const pct = (value: number) => (total === 0 ? 0 : Math.round((value / total) * 100));
 
   const attendingLen = total === 0 ? 0 : (attending / total) * CIRCUMFERENCE;
   const pendingLen = total === 0 ? 0 : (pending / total) * CIRCUMFERENCE;
@@ -24,16 +23,12 @@ export function OverviewRsvpDistribution({
       <h2 className="mb-1 text-lg font-semibold tracking-tight text-foreground">
         RSVP Distribution
       </h2>
-      <p className="mb-4 text-[13px] text-muted-foreground">
-        Overview of response status
-      </p>
+      <p className="mb-4 text-[13px] text-muted-foreground">Overview of response status</p>
 
       <div className="relative my-2 flex items-center justify-center">
         {total === 0 ? (
           <div className="flex size-44 items-center justify-center rounded-full border border-dashed border-border">
-            <p className="px-6 text-center text-sm text-muted-foreground">
-              No responses yet
-            </p>
+            <p className="px-6 text-center text-sm text-muted-foreground">No responses yet</p>
           </div>
         ) : (
           <>
@@ -119,17 +114,11 @@ export function OverviewRsvpDistribution({
           >
             <div className="flex items-center gap-2">
               <span className={`size-3 rounded-full ${row.swatch}`} />
-              <span className="text-xs font-semibold text-foreground">
-                {row.label}
-              </span>
+              <span className="text-xs font-semibold text-foreground">{row.label}</span>
             </div>
             <div className="flex items-center gap-3">
-              <span className="text-[11px] font-bold text-muted-foreground">
-                {row.value} pax
-              </span>
-              <span className="text-xs font-semibold text-foreground">
-                {row.percent}%
-              </span>
+              <span className="text-[11px] font-bold text-muted-foreground">{row.value} pax</span>
+              <span className="text-xs font-semibold text-foreground">{row.percent}%</span>
             </div>
           </div>
         ))}

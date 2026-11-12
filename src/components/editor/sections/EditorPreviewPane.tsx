@@ -112,13 +112,7 @@ function PreviewBody({
   }
 
   if (hasInvitationRenderer(template.id)) {
-    return (
-      <InvitationTemplateRenderer
-        data={viewModel}
-        startOpened
-        embedded
-      />
-    );
+    return <InvitationTemplateRenderer data={viewModel} startOpened embedded />;
   }
 
   return (
@@ -138,9 +132,8 @@ function PreviewBody({
         <div className="my-2 h-px w-14 bg-current opacity-30" />
         <p className="template-date">{viewModel.weddingDateLabel}</p>
         <p className="template-place">
-          {[viewModel.venueName, viewModel.venueAddress]
-            .filter(Boolean)
-            .join(" · ") || template.place}
+          {[viewModel.venueName, viewModel.venueAddress].filter(Boolean).join(" · ") ||
+            template.place}
         </p>
       </div>
     </div>
@@ -163,9 +156,7 @@ export function EditorThemeStep({
   return (
     <div className="flex flex-col gap-4 rounded-xl bg-card p-5 shadow-sm lg:p-6">
       <div className="flex items-center justify-between gap-2">
-        <h2 className="text-lg font-semibold tracking-tight">
-          Choose Wedding Aesthetic
-        </h2>
+        <h2 className="text-lg font-semibold tracking-tight">Choose Wedding Aesthetic</h2>
         <span className="text-[11px] font-bold text-muted-foreground">
           {invitationTemplates.length} styles
         </span>
@@ -180,9 +171,7 @@ export function EditorThemeStep({
               onClick={() => onSelect(item.id)}
               className={cn(
                 "relative flex flex-col gap-2.5 rounded-xl bg-secondary/50 p-3.5 text-left transition-all hover:shadow-md",
-                active
-                  ? "bg-secondary ring-2 ring-accent shadow-sm"
-                  : "hover:bg-secondary",
+                active ? "bg-secondary ring-2 ring-accent shadow-sm" : "hover:bg-secondary",
               )}
             >
               <div
@@ -212,9 +201,7 @@ export function EditorThemeStep({
                   </span>
                 )}
               </div>
-              <p className="text-[13px] leading-snug text-muted-foreground">
-                {item.vibe}
-              </p>
+              <p className="text-[13px] leading-snug text-muted-foreground">{item.vibe}</p>
             </button>
           );
         })}

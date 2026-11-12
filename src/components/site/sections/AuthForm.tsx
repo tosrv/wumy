@@ -97,9 +97,7 @@ export function AuthForm({ initialMode = "login", nextPath = "/dashboard" }: Aut
       }
 
       if (!isStrongPassword(password)) {
-        setError(
-          "Kata sandi belum cukup kuat. Penuhi semua syarat di bawah kolom kata sandi.",
-        );
+        setError("Kata sandi belum cukup kuat. Penuhi semua syarat di bawah kolom kata sandi.");
         return;
       }
       const result = await signUp(email, password, fullName.trim(), token);
@@ -138,8 +136,7 @@ export function AuthForm({ initialMode = "login", nextPath = "/dashboard" }: Aut
             <code className="text-charcoal">VITE_SUPABASE_URL</code> dan{" "}
             <code className="text-charcoal">VITE_SUPABASE_ANON_KEY</code> di{" "}
             <code className="text-charcoal">.env</code>, lalu jalankan{" "}
-            <code className="text-charcoal">supabase/schema.sql</code>
-            .
+            <code className="text-charcoal">supabase/schema.sql</code>.
           </div>
         )}
 

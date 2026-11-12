@@ -24,9 +24,7 @@ export function SettingsPage() {
 
   useEffect(() => {
     if (!user) return;
-    setFullName(
-      (user.user_metadata?.["full_name"] as string | undefined)?.trim() || "",
-    );
+    setFullName((user.user_metadata?.["full_name"] as string | undefined)?.trim() || "");
     setEmail(user.email ?? "");
   }, [user]);
 
@@ -83,9 +81,7 @@ export function SettingsPage() {
       setConfirmPassword("");
       setPasswordMessage("Password updated.");
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Failed to update password.",
-      );
+      setError(err instanceof Error ? err.message : "Failed to update password.");
     } finally {
       setSavingPassword(false);
     }
@@ -104,9 +100,7 @@ export function SettingsPage() {
         </div>
 
         {error && (
-          <p className="rounded-xl bg-destructive/10 px-4 py-3 text-sm text-destructive">
-            {error}
-          </p>
+          <p className="rounded-xl bg-destructive/10 px-4 py-3 text-sm text-destructive">{error}</p>
         )}
 
         <section className="rounded-xl bg-card p-6 shadow-sm">
@@ -214,22 +208,12 @@ export function SettingsPage() {
 
         <section className="rounded-xl bg-card p-6 shadow-sm">
           <h2 className="text-lg font-semibold tracking-tight">Quick links</h2>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Jump to related account pages.
-          </p>
+          <p className="mt-1 text-sm text-muted-foreground">Jump to related account pages.</p>
           <div className="mt-4 flex flex-wrap gap-2">
-            <Button
-              asChild
-              variant="outline"
-              className="h-10 rounded-xl bg-card shadow-sm"
-            >
+            <Button asChild variant="outline" className="h-10 rounded-xl bg-card shadow-sm">
               <Link to="/dashboard/billing">Billing</Link>
             </Button>
-            <Button
-              asChild
-              variant="outline"
-              className="h-10 rounded-xl bg-card shadow-sm"
-            >
+            <Button asChild variant="outline" className="h-10 rounded-xl bg-card shadow-sm">
               <Link to="/dashboard/help">Help / Support</Link>
             </Button>
           </div>

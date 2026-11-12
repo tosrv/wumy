@@ -1,15 +1,6 @@
-import {
-  createContext,
-  use,
-  useEffect,
-  useState,
-  type ReactNode,
-} from "react";
+import { createContext, use, useEffect, useState, type ReactNode } from "react";
 import type { Session, User } from "@supabase/supabase-js";
-import {
-  getSupabaseBrowserClient,
-  isSupabaseConfigured,
-} from "@/lib/supabase/client";
+import { getSupabaseBrowserClient, isSupabaseConfigured } from "@/lib/supabase/client";
 
 type AuthContextValue = {
   configured: boolean;
@@ -82,8 +73,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const supabase = getSupabaseBrowserClient();
       if (!supabase) {
         return {
-          error:
-            "Supabase is not configured. Add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY.",
+          error: "Supabase is not configured. Add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY.",
         };
       }
       const { error } = await supabase.auth.signInWithPassword({
@@ -97,8 +87,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const supabase = getSupabaseBrowserClient();
       if (!supabase) {
         return {
-          error:
-            "Supabase is not configured. Add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY.",
+          error: "Supabase is not configured. Add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY.",
         };
       }
       const { error } = await supabase.auth.signUp({

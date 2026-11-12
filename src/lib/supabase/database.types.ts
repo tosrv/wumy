@@ -1,23 +1,8 @@
-export type Json =
-  | string
-  | number
-  | boolean
-  | null
-  | { [key: string]: Json | undefined }
-  | Json[];
+export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
 
-export type InvitationStatus =
-  | "draft"
-  | "pending_payment"
-  | "published"
-  | "archived";
+export type InvitationStatus = "draft" | "pending_payment" | "published" | "archived";
 
-export type PaymentStatus =
-  | "unpaid"
-  | "pending"
-  | "paid"
-  | "failed"
-  | "refunded";
+export type PaymentStatus = "unpaid" | "pending" | "paid" | "failed" | "refunded";
 
 export type RsvpStatus = "coming" | "not_coming" | "pending";
 

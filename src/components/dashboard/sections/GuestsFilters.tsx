@@ -25,22 +25,21 @@ export function GuestsFilters({
   onGroupChange,
   groups,
 }: GuestsFiltersProps) {
-  const tabs: { id: GuestStatusFilter; label: string; count: number; dot?: string }[] =
-    [
-      { id: "all", label: "All", count: counts.all },
-      {
-        id: "responded",
-        label: "Responded",
-        count: counts.responded,
-        dot: "bg-[oklch(0.45_0.1_160)]",
-      },
-      {
-        id: "pending",
-        label: "Not Responded",
-        count: counts.pending,
-        dot: "bg-muted-foreground",
-      },
-    ];
+  const tabs: { id: GuestStatusFilter; label: string; count: number; dot?: string }[] = [
+    { id: "all", label: "All", count: counts.all },
+    {
+      id: "responded",
+      label: "Responded",
+      count: counts.responded,
+      dot: "bg-[oklch(0.45_0.1_160)]",
+    },
+    {
+      id: "pending",
+      label: "Not Responded",
+      count: counts.pending,
+      dot: "bg-muted-foreground",
+    },
+  ];
 
   return (
     <div className="flex flex-col items-stretch justify-between gap-4 rounded-xl bg-card p-3.5 shadow-sm lg:flex-row lg:items-center">
@@ -59,9 +58,7 @@ export function GuestsFilters({
                   : "text-muted-foreground hover:bg-secondary hover:text-foreground",
               )}
             >
-              {tab.dot && !active ? (
-                <span className={cn("size-2 rounded-full", tab.dot)} />
-              ) : null}
+              {tab.dot && !active ? <span className={cn("size-2 rounded-full", tab.dot)} /> : null}
               <span>{tab.label}</span>
               <span
                 className={cn(

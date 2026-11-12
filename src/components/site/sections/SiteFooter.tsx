@@ -90,7 +90,9 @@ export function SiteFooter() {
           </div>
         </div>
         <div className="pt-space-lg flex flex-col sm:flex-row items-center justify-between gap-space-sm">
-          <p className="font-body-sm text-body-sm text-text-muted">© 2026 WUMY. Hak cipta dilindungi.</p>
+          <p className="font-body-sm text-body-sm text-text-muted">
+            © 2026 WUMY. Hak cipta dilindungi.
+          </p>
           <div className="flex items-center gap-space-md"></div>
         </div>
       </div>
