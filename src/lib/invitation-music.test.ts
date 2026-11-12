@@ -25,34 +25,27 @@ describe("validateMusicFile", () => {
   });
 });
 
-function stubClient(uploadError: { message: string } | null = null) {
+function stubUpload(uploadError: string | null = null) {
   const calls: string[] = [];
   const upload = vi.fn(async (path: string) => {
     calls.push(`upload:${path}`);
-    return { error: uploadError };
+    if (uploadError) throw new Error(uploadError);
   });
-  const remove = vi.fn(async (paths: string[]) => {
-    calls.push(`remove:${paths.join(",")}`);
-    return { error: null };
-  });
-  const client = { storage: { from: () => ({ upload, remove }) } };
-  return { client, calls, upload, remove };
+  return { upload, calls };
 }
 
 const file = new File(["x"], "My Song.mp3", { type: "audio/mpeg" });
 
 describe("uploadMusicWith", () => {
   it("uploads to a timestamped path and never removes anything", async () => {
-    const s = stubClient();
-    const r = await uploadMusicWith(s.client, "inv", "own", file, 123);
+    const s = stubUpload();
+    const r = await uploadMusicWith(s.upload, "inv", "own", file, 123);
     expect(r).toEqual({ path: "own/inv/music-123.mp3", fileName: "My Song.mp3" });
     expect(s.calls).toEqual(["upload:own/inv/music-123.mp3"]);
-    expect(s.remove).not.toHaveBeenCalled();
   });
   it("throws when upload fails", async () => {
-    const s = stubClient({ message: "boom" });
-    await expect(uploadMusicWith(s.client, "inv", "own", file, 1)).rejects.toThrow("boom");
-    expect(s.remove).not.toHaveBeenCalled();
+    const s = stubUpload("boom");
+    await expect(uploadMusicWith(s.upload, "inv", "own", file, 1)).rejects.toThrow("boom");
   });
 });
 
@@ -74,23 +67,18 @@ describe("musicPathForCleanup", () => {
 
 describe("listMusicWith", () => {
   it("returns full paths of the files in the invitation's music folder", async () => {
-    const list = vi.fn().mockResolvedValue({
-      data: [{ name: "music-1.mp3" }, { name: "music-2.mp3" }],
-      error: null,
-    });
-    const client = { storage: { from: () => ({ list }) } };
-    expect(await listMusicWith(client, "own", "inv")).toEqual([
+    const list = vi.fn().mockResolvedValue(["own/inv/music-1.mp3", "own/inv/music-2.mp3"]);
+    expect(await listMusicWith(list, "own", "inv")).toEqual([
       "own/inv/music-1.mp3",
       "own/inv/music-2.mp3",
     ]);
-    expect(list).toHaveBeenCalledWith("own/inv", { limit: 100 });
+    expect(list).toHaveBeenCalledWith("own/inv");
   });
 
   it("returns [] when listing fails", async () => {
     const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
-    const list = vi.fn().mockResolvedValue({ data: null, error: { message: "nope" } });
-    const client = { storage: { from: () => ({ list }) } };
-    expect(await listMusicWith(client, "own", "inv")).toEqual([]);
+    const list = vi.fn().mockRejectedValue(new Error("nope"));
+    expect(await listMusicWith(list, "own", "inv")).toEqual([]);
     expect(warn).toHaveBeenCalledOnce();
     warn.mockRestore();
   });

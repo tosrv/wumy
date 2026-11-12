@@ -35,7 +35,8 @@ Before committing, run at least `npx tsc --noEmit` and `npm test`, and make sure
   - `api/webhooks/doku.ts`: DOKU payment webhook.
 - `src/components/`: `ui/` (shadcn + shared components, e.g. `password-input.tsx`), `site/`, `dashboard/`, `editor/`, `invitations/`, `order/`, `payments/`.
 - `src/lib/`: shared logic + unit tests (`*.test.ts` next to the source file).
-- `src/server/`: server-only code (payments, staging gate, share meta).
+- `src/server/`: server-only code (payments, R2 storage, staging gate, share meta).
+- Storage: always go through `src/lib/storage.ts` (Supabase Storage or Cloudflare R2, picked by `VITE_STORAGE_PUBLIC_URL`); bucket limits and path rules live in `src/lib/storage-rules.ts`.
 - `src/templates/`, `src/data/templates.ts`: invitation templates.
 - `supabase/schema.sql`: full schema (tables, RLS, triggers, functions, storage). `supabase/dev/`: development-only scripts.
 
@@ -44,7 +45,7 @@ Before committing, run at least `npx tsc --noEmit` and `npm test`, and make sure
 - TypeScript; `@/` import alias → `src/`.
 - Prettier: width 100, semicolons, double quotes, trailing commas.
 - Reuse components in `src/components/ui/` before adding new ones. Use `PasswordInput` for password fields.
-- Secrets (`SUPABASE_SERVICE_ROLE_KEY`, `DOKU_SECRET_KEY`, `STAGING_PASSWORD`) are server-only and must never get a `VITE_` prefix.
+- Secrets (`SUPABASE_SERVICE_ROLE_KEY`, `DOKU_SECRET_KEY`, `R2_SECRET_ACCESS_KEY`, `R2_ACCESS_KEY_ID`, `STAGING_PASSWORD`) are server-only and must never get a `VITE_` prefix.
 - Payment status is changed only on the server (`mark_invitation_paid`). Don't loosen RLS or payment rules in `schema.sql`.
 - Reserved slugs in `src/lib/slug.ts` (`RESERVED_SLUGS`) must stay in sync with the database; update both when adding a top-level route.
 

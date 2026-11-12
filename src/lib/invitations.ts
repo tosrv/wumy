@@ -1,5 +1,7 @@
 import { exceedsPhotoCap } from "@/lib/photo-slots";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
+import { storagePublicUrl, storageRemove, storageUpload } from "@/lib/storage";
+import { BUCKET_RULES, PHOTO_BUCKET } from "@/lib/storage-rules";
 import type { Database } from "@/lib/supabase/database.types";
 import { legacyColumnsFromContent, parseContent } from "@/lib/invitation-content-io";
 import {
@@ -30,9 +32,8 @@ export type WeddingDetailsInput = {
   slug: string;
 };
 
-const PHOTO_BUCKET = "invitation-photos";
 export const MAX_INVITATION_PHOTOS = 6;
-export const MAX_PHOTO_BYTES = 5 * 1024 * 1024;
+export const MAX_PHOTO_BYTES = BUCKET_RULES[PHOTO_BUCKET].maxBytes;
 
 export function slugifyCouple(partnerA: string, partnerB: string): string {
   const raw = [partnerA, partnerB]
@@ -224,8 +225,7 @@ export async function deleteInvitation(invitationId: string): Promise<void> {
   const photos = await listInvitationPhotos(invitationId);
   if (photos.length > 0) {
     const paths = photos.map((photo) => photo.storage_path);
-    const { error: storageError } = await supabase.storage.from(PHOTO_BUCKET).remove(paths);
-    if (storageError) throw new Error(storageError.message);
+    await storageRemove(PHOTO_BUCKET, paths);
   }
 
   // Storage write policies check that the invitation row exists and is owned by
@@ -286,13 +286,7 @@ export async function uploadInvitationPhotos(
     const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_").slice(0, 80);
     const path = `${ownerId}/${invitationId}/${Date.now()}-${index}-${safeName}`;
 
-    const { error: uploadError } = await supabase.storage.from(PHOTO_BUCKET).upload(path, file, {
-      cacheControl: "3600",
-      upsert: false,
-      contentType: file.type,
-    });
-
-    if (uploadError) throw new Error(uploadError.message);
+    await storageUpload(PHOTO_BUCKET, path, file, file.type);
 
     const { data, error: rowError } = await supabase
       .from("invitation_photos")
@@ -309,7 +303,7 @@ export async function uploadInvitationPhotos(
       .single();
 
     if (rowError) {
-      await supabase.storage.from(PHOTO_BUCKET).remove([path]);
+      await storageRemove(PHOTO_BUCKET, [path]).catch(() => undefined);
       throw new Error(rowError.message);
     }
     created.push(data);
@@ -362,17 +356,11 @@ export async function replaceInvitationPhotoFile(
 
   const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_").slice(0, 80);
   const newPath = `${ownerId}/${invitationId}/${Date.now()}-0-${safeName}`;
-  const bucket = supabase.storage.from(PHOTO_BUCKET);
 
   return replacePhotoFileWith(
     {
       async upload(path) {
-        const { error } = await bucket.upload(path, file, {
-          cacheControl: "3600",
-          upsert: false,
-          contentType: file.type,
-        });
-        if (error) throw new Error(error.message);
+        await storageUpload(PHOTO_BUCKET, path, file, file.type);
       },
       async updatePath(photoId, path) {
         const { data, error } = await supabase
@@ -385,8 +373,7 @@ export async function replaceInvitationPhotoFile(
         return data;
       },
       async remove(path) {
-        const { error } = await bucket.remove([path]);
-        if (error) throw new Error(error.message);
+        await storageRemove(PHOTO_BUCKET, [path]);
       },
     },
     photo,
@@ -398,10 +385,7 @@ export async function deleteInvitationPhoto(photo: InvitationPhotoRow): Promise<
   const supabase = getSupabaseBrowserClient();
   if (!supabase) throw new Error("Supabase is not configured.");
 
-  const { error: storageError } = await supabase.storage
-    .from(PHOTO_BUCKET)
-    .remove([photo.storage_path]);
-  if (storageError) throw new Error(storageError.message);
+  await storageRemove(PHOTO_BUCKET, [photo.storage_path]);
 
   const { error } = await supabase.from("invitation_photos").delete().eq("id", photo.id);
 
@@ -454,10 +438,7 @@ export async function setPhotoRole(
 }
 
 export function publicPhotoUrl(storagePath: string): string {
-  const supabase = getSupabaseBrowserClient();
-  if (!supabase) return "";
-  const { data } = supabase.storage.from(PHOTO_BUCKET).getPublicUrl(storagePath);
-  return data.publicUrl;
+  return storagePublicUrl(PHOTO_BUCKET, storagePath);
 }
 
 export function formatWeddingDate(isoDate: string | null | undefined): string {
