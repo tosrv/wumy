@@ -3,6 +3,7 @@ import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import { storagePublicUrl, storageRemove, storageUpload } from "@/lib/storage";
 import { BUCKET_RULES, PHOTO_BUCKET } from "@/lib/storage-rules";
 import { compressPhoto } from "@/lib/image-compress";
+import { EditorError } from "@/lib/editor-i18n";
 import type { Database } from "@/lib/supabase/database.types";
 import { legacyColumnsFromContent, parseContent } from "@/lib/invitation-content-io";
 import {
@@ -275,15 +276,15 @@ export async function uploadInvitationPhotos(
   const existing = await listInvitationPhotos(invitationId);
   // Only gallery photos count toward the limit; partner/cover photos have their own slots.
   if (exceedsPhotoCap(existing, role, files.length, MAX_INVITATION_PHOTOS)) {
-    throw new Error(`You can upload up to ${MAX_INVITATION_PHOTOS} photos.`);
+    throw new EditorError("photoCapReached", { n: MAX_INVITATION_PHOTOS });
   }
 
   if (files.some((file) => file.size > MAX_PHOTO_INPUT_BYTES)) {
-    throw new Error("Each photo must be under 20MB.");
+    throw new EditorError("photoTooLarge");
   }
   files = await Promise.all(files.map(compressPhoto));
   if (files.some((file) => file.size > MAX_PHOTO_BYTES)) {
-    throw new Error("Photo is still too large after compression. Try a smaller photo.");
+    throw new EditorError("photoStillTooLarge");
   }
 
   const startOrder = existing.reduce((max, photo) => Math.max(max, photo.sort_order), -1) + 1;
@@ -359,11 +360,9 @@ export async function replaceInvitationPhotoFile(
 ): Promise<InvitationPhotoRow> {
   const supabase = getSupabaseBrowserClient();
   if (!supabase) throw new Error("Supabase is not configured.");
-  if (file.size > MAX_PHOTO_INPUT_BYTES) throw new Error("Each photo must be under 20MB.");
+  if (file.size > MAX_PHOTO_INPUT_BYTES) throw new EditorError("photoTooLarge");
   file = await compressPhoto(file);
-  if (file.size > MAX_PHOTO_BYTES) {
-    throw new Error("Photo is still too large after compression. Try a smaller photo.");
-  }
+  if (file.size > MAX_PHOTO_BYTES) throw new EditorError("photoStillTooLarge");
 
   const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_").slice(0, 80);
   const newPath = `${ownerId}/${invitationId}/${Date.now()}-0-${safeName}`;
@@ -599,10 +598,10 @@ export async function publishInvitation(invitationId: string): Promise<Invitatio
 
   if (loadError) throw new Error(loadError.message);
   if (current.payment_status !== "paid") {
-    throw new Error("Payment required before publishing.");
+    throw new EditorError("paymentRequired");
   }
   if (!contentPublishSchema.safeParse(parseContent(current)).success) {
-    throw new Error("Complete the required invitation details before publishing.");
+    throw new EditorError("publishIncomplete");
   }
 
   const { data, error } = await supabase
