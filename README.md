@@ -1,80 +1,80 @@
 # WUMY
 
-Undangan pernikahan digital: situs publik, pesanan + pembayaran DOKU, editor, dan halaman undangan `/<slug>`.
+Digital wedding invitations: public site, ordering + DOKU payments, editor, and invitation pages at `/<slug>`.
 
-**Stack:** TanStack Start (React, SSR) di Vercel · Supabase (Postgres, Auth, Storage) · DOKU Checkout · PostHog (opsional).
+**Stack:** TanStack Start (React, SSR) on Vercel · Supabase (Postgres, Auth, Storage) · DOKU Checkout · PostHog (optional).
 
-**Alur pelanggan:** template → demo → *Gunakan template ini* → daftar/masuk → `/order` (bayar) → editor → *Terbitkan* → bagikan `/<slug>`.
+**Customer flow:** template → demo → *Gunakan template ini* ("Use this template") → sign up/sign in → `/order` (pay) → editor → *Terbitkan* ("Publish") → share `/<slug>`.
 
-## Menjalankan lokal
+## Running locally
 
-Butuh Node.js 22+.
+Requires Node.js 22+.
 
 ```sh
 npm install
-cp .env.example .env   # isi nilai Supabase
+cp .env.example .env   # fill in the Supabase values
 npm run dev
 ```
 
-| Perintah | Fungsi |
+| Command | Purpose |
 | --- | --- |
 | `npm run dev` | Dev server |
-| `npm run build` | Build produksi (Nitro → Vercel) |
+| `npm run build` | Production build (Nitro → Vercel) |
 | `npm test` | Vitest |
 | `npm run lint` | ESLint |
 
-Halaman publik jalan tanpa Supabase; login, `/order`, dashboard, dan editor butuh Supabase.
+Public pages work without Supabase; login, `/order`, the dashboard, and the editor need Supabase.
 
 ## Supabase
 
-1. Buat project baru di supabase.com.
-2. **SQL Editor** → jalankan [`supabase/schema.sql`](supabase/schema.sql) sekali (skema lengkap: tabel, RLS, trigger, fungsi, bucket storage, seed template).
-3. **Authentication → Providers** → aktifkan **Email**.
-4. **Authentication → URL Configuration → Redirect URLs** → tambahkan `https://<domain>/reset-password` (dan `http://localhost:5173/reset-password` untuk lokal).
-5. Opsional: terjemahkan template email *Reset Password* (pertahankan `{{ .ConfirmationURL }}`).
+1. Create a new project at supabase.com.
+2. **SQL Editor** → run [`supabase/schema.sql`](supabase/schema.sql) once (full schema: tables, RLS, triggers, functions, storage bucket, template seed).
+3. **Authentication → Providers** → enable **Email**.
+4. **Authentication → URL Configuration → Redirect URLs** → add `https://<domain>/reset-password` (and `http://localhost:5173/reset-password` for local).
+5. Optional: translate the *Reset Password* email template (keep `{{ .ConfirmationURL }}`).
 
-Aturan penting yang dijaga database:
-- Undangan hanya bisa tayang jika `payment_status = 'paid'`; status bayar hanya diubah server (`mark_invitation_paid`, service role).
-- Satu undangan per akun; slug yang dipakai route aplikasi ditolak (sinkron dengan `RESERVED_SLUGS` di `src/lib/slug.ts`); slug dikunci setelah pernah tayang.
+Key rules enforced by the database:
+- An invitation can only go live when `payment_status = 'paid'`; payment status is changed only by the server (`mark_invitation_paid`, service role).
+- One invitation per account; slugs used by app routes are rejected (kept in sync with `RESERVED_SLUGS` in `src/lib/slug.ts`); a slug is locked once it has been published.
 
-Lewati pembayaran di project **development**: jalankan [`supabase/dev/mark_paid.sql`](supabase/dev/mark_paid.sql) (ganti slug).
+To skip payment in the **development** project, run [`supabase/dev/mark_paid.sql`](supabase/dev/mark_paid.sql) (replace the slug).
 
 ## Environment variables
 
-| Variable | Wajib | Keterangan |
+| Variable | Required | Notes |
 | --- | --- | --- |
-| `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` | ya | Supabase → Project Settings → API |
-| `VITE_SITE_URL` | ya (produksi) | Domain situs, mis. `https://www.wumy.my.id` (canonical/OG, URL kembali DOKU) |
-| `SUPABASE_SERVICE_ROLE_KEY` | pembayaran | **Rahasia**, server saja |
-| `DOKU_CLIENT_ID`, `DOKU_SECRET_KEY` | pembayaran | Dari DOKU Back Office; Secret Key **rahasia** |
-| `DOKU_API_BASE` | pembayaran | `https://api-sandbox.doku.com` atau `https://api.doku.com` |
-| `PUBLISH_PRICE_IDR` | tidak | Ganti harga (rupiah, ≥ 1000). Default Rp 99.000 |
-| `VITE_POSTHOG_KEY`, `VITE_POSTHOG_HOST` | tidak | Analitik PostHog; kosong = mati |
+| `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` | yes | Supabase → Project Settings → API |
+| `VITE_SITE_URL` | yes (production) | Site domain, e.g. `https://www.wumy.my.id` (canonical/OG, DOKU return URL) |
+| `SUPABASE_SERVICE_ROLE_KEY` | payments | **Secret**, server only |
+| `DOKU_CLIENT_ID`, `DOKU_SECRET_KEY` | payments | From DOKU Back Office; the Secret Key is **secret** |
+| `DOKU_API_BASE` | payments | `https://api-sandbox.doku.com` or `https://api.doku.com` |
+| `PUBLISH_PRICE_IDR` | no | Override the price (rupiah, ≥ 1000). Default Rp 99,000 |
+| `VITE_POSTHOG_KEY`, `VITE_POSTHOG_HOST` | no | PostHog analytics; empty = disabled |
 
-Variabel rahasia jangan pernah diberi awalan `VITE_`. Redeploy Vercel setelah mengubah env. Tanpa konfigurasi DOKU lengkap, `/order` menampilkan "Pembayaran online segera hadir".
+Never give secret variables a `VITE_` prefix. Redeploy on Vercel after changing env vars. Without a complete DOKU configuration, `/order` shows "Pembayaran online segera hadir" ("Online payment coming soon").
 
 ## Staging (`dev.wumy.my.id`)
 
-Branch `dev` dideploy sebagai Vercel **Preview** dengan domain `dev.wumy.my.id`, Supabase **dev** terpisah, dan DOKU **sandbox**. Env vars Preview (branch `dev`):
+The `dev` branch is deployed as a Vercel **Preview** on the `dev.wumy.my.id` domain, with a separate **dev** Supabase project and DOKU **sandbox**. Preview env vars (branch `dev`):
 
-| Variable | Nilai |
+| Variable | Value |
 | --- | --- |
-| `STAGING_PASSWORD` | Password kunci staging (server saja). Login: user `wumy` + password ini. Kosong = tidak dikunci |
-| `VITE_APP_ENV` | `staging` → label "Staging" di pojok layar |
+| `STAGING_PASSWORD` | Staging lock password (server only). Login: user `wumy` + this password. Empty = not locked |
+| `VITE_APP_ENV` | `staging` → "Staging" label in the corner of the screen |
 | `VITE_SITE_URL` | `https://dev.wumy.my.id` |
-| Supabase / DOKU | kunci project dev dan sandbox (`DOKU_API_BASE=https://api-sandbox.doku.com`) |
+| Supabase / DOKU | dev project and sandbox keys (`DOKU_API_BASE=https://api-sandbox.doku.com`) |
 
-Kunci staging (`src/server/staging/gate.ts`) meminta Basic Auth untuk semua halaman, kecuali `POST /api/webhooks/doku` (dilindungi tanda tangan DOKU), dan menambahkan `X-Robots-Tag: noindex`. Production tidak terpengaruh karena tidak punya `STAGING_PASSWORD`. Matikan Vercel Deployment Protection untuk Preview agar webhook DOKU sandbox bisa masuk.
+The staging lock (`src/server/staging/gate.ts`) requires Basic Auth on every page except `POST /api/webhooks/doku` (protected by the DOKU signature), and adds `X-Robots-Tag: noindex`. Production is unaffected because it has no `STAGING_PASSWORD`. Turn off Vercel Deployment Protection for Preview so DOKU sandbox webhooks can get through.
 
-## Pembayaran (DOKU Checkout)
+## Payments (DOKU Checkout)
 
-- `/order` memanggil server function `createPublishCheckout` → halaman DOKU → kembali ke `/payment/status?invoice=…`.
-- DOKU mengirim notifikasi ke `POST /api/webhooks/doku`: tanda tangan HMAC diverifikasi, status dan nominal dicek ulang ke DOKU, lalu `mark_invitation_paid` (idempoten). Pembayaran tidak menayangkan undangan; pemilik menekan **Terbitkan** di editor.
-- **DOKU Back Office** → Payment Settings → tiap metode yang aktif (bukan versi SNAP) → Notification URL: `https://<domain>/api/webhooks/doku`.
-- Cek cepat: `curl -i -X POST https://<domain>/api/webhooks/doku -d '{}'` → `503` = env belum lengkap, `401` = siap.
-- Uji sandbox: daftar → `/order` → Bayar → bayar lewat **Simulator** DOKU → "Mulai isi undangan" → isi → **Terbitkan** → buka `/<slug>`.
-- Refund diproses manual (DOKU Back Office); kebijakan di `/refund`.
+- `/order` calls the `createPublishCheckout` server function → DOKU page → back to `/payment/status?invoice=…`.
+- DOKU sends notifications to `POST /api/webhooks/doku`: the HMAC signature is verified, status and amount are re-checked with DOKU, then `mark_invitation_paid` runs (idempotent). Paying does not publish the invitation; the owner presses **Terbitkan** ("Publish") in the editor.
+- **DOKU Back Office** → Payment Settings → each active method (not the SNAP version) → Notification URL: `https://<domain>/api/webhooks/doku`.
+- Quick check: `curl -i -X POST https://<domain>/api/webhooks/doku -d '{}'` → `503` = env incomplete, `401` = ready.
+- Sandbox test: sign up → `/order` → Bayar ("Pay") → pay with the DOKU **Simulator** → "Mulai isi undangan" ("Start filling in the invitation") → fill it in → **Terbitkan** → open `/<slug>`.
+- Refunds are processed manually (DOKU Back Office); the policy is at `/refund`.
 
-## Analitik (PostHog, opsional)
+## Analytics (PostHog, optional)
 
-Event: `demo_view` → `order_view` → `signup` → `checkout_start` → `paid` → `editor_open` → `published` (+ page view). Halaman undangan publik tidak memuat PostHog; URL dibersihkan dari query, slug, dan id sebelum dikirim. Kode: `src/lib/analytics.ts`.
+Events: `demo_view` → `order_view` → `signup` → `checkout_start` → `paid` → `editor_open` → `published` (+ page views). Public invitation pages don't load PostHog; URLs are stripped of query strings, slugs, and ids before being sent. Code: `src/lib/analytics.ts`.
