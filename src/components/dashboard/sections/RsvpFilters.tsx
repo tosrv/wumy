@@ -3,11 +3,7 @@ import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 
 export type RsvpStatusFilter = "all" | "attending" | "pending" | "declined";
-export type RsvpSort =
-  | "newest"
-  | "oldest"
-  | "pax-high"
-  | "pax-low";
+export type RsvpSort = "newest" | "oldest" | "pax-high" | "pax-low";
 
 interface RsvpFiltersProps {
   status: RsvpStatusFilter;
@@ -83,9 +79,7 @@ export function RsvpFilters({
                   : "text-muted-foreground hover:bg-secondary hover:text-foreground",
               )}
             >
-              {tab.dot && !active ? (
-                <span className={cn("size-2 rounded-full", tab.dot)} />
-              ) : null}
+              {tab.dot && !active ? <span className={cn("size-2 rounded-full", tab.dot)} /> : null}
               <span>{tab.label}</span>
               <span
                 className={cn(

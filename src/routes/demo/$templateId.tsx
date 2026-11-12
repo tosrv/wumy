@@ -47,10 +47,5 @@ function DemoPage() {
     throw notFound();
   }
 
-  return (
-    <TemplateDemoView
-      template={template}
-      {...(guestName ? { guestName } : {})}
-    />
-  );
+  return <TemplateDemoView template={template} {...(guestName ? { guestName } : {})} />;
 }

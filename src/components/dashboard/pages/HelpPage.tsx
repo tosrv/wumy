@@ -1,11 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import {
-  BookOpen,
-  HelpCircle,
-  LifeBuoy,
-  Mail,
-  MessageCircle,
-} from "lucide-react";
+import { BookOpen, HelpCircle, LifeBuoy, Mail, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const faqs = [
@@ -55,16 +49,12 @@ export function HelpPage() {
               Help Center
             </h1>
             <p className="max-w-2xl text-base text-muted-foreground">
-              Quick answers for invitations, guests, RSVP, and your account —
-              plus a direct line to support.
+              Quick answers for invitations, guests, RSVP, and your account — plus a direct line to
+              support.
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2 self-start lg:self-auto">
-            <Button
-              asChild
-              variant="outline"
-              className="h-10 rounded-xl bg-card shadow-sm"
-            >
+            <Button asChild variant="outline" className="h-10 rounded-xl bg-card shadow-sm">
               <Link to="/faq">
                 <HelpCircle className="size-4" />
                 Full FAQ
@@ -84,38 +74,24 @@ export function HelpPage() {
 
         <div className="grid grid-cols-1 gap-3.5 md:grid-cols-3">
           {topics.map((topic) => (
-            <div
-              key={topic.title}
-              className="rounded-xl bg-card p-6 shadow-sm"
-            >
+            <div key={topic.title} className="rounded-xl bg-card p-6 shadow-sm">
               <topic.icon className="size-5 text-muted-foreground" />
-              <h2 className="mt-4 text-base font-semibold tracking-tight">
-                {topic.title}
-              </h2>
-              <p className="mt-1 text-sm text-muted-foreground">
-                {topic.description}
-              </p>
+              <h2 className="mt-4 text-base font-semibold tracking-tight">{topic.title}</h2>
+              <p className="mt-1 text-sm text-muted-foreground">{topic.description}</p>
             </div>
           ))}
         </div>
 
         <section className="rounded-xl bg-card p-6 shadow-sm">
-          <h2 className="text-lg font-semibold tracking-tight">
-            Frequently asked
-          </h2>
+          <h2 className="text-lg font-semibold tracking-tight">Frequently asked</h2>
           <p className="mt-1 text-sm text-muted-foreground">
             Common questions from couples using WUMY.
           </p>
           <div className="mt-5 flex flex-col gap-2">
             {faqs.map((item) => (
-              <div
-                key={item.q}
-                className="rounded-xl bg-secondary/50 px-4 py-4"
-              >
+              <div key={item.q} className="rounded-xl bg-secondary/50 px-4 py-4">
                 <p className="font-semibold text-foreground">{item.q}</p>
-                <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">
-                  {item.a}
-                </p>
+                <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">{item.a}</p>
               </div>
             ))}
           </div>
@@ -128,12 +104,10 @@ export function HelpPage() {
           />
           <div className="relative z-10 flex flex-col justify-between gap-4 md:flex-row md:items-center">
             <div>
-              <h2 className="text-lg font-semibold tracking-tight">
-                Still need help?
-              </h2>
+              <h2 className="text-lg font-semibold tracking-tight">Still need help?</h2>
               <p className="mt-1 max-w-xl text-sm text-muted-foreground">
-                Reach customer support for account, publish, or payment issues.
-                We usually reply within one business day.
+                Reach customer support for account, publish, or payment issues. We usually reply
+                within one business day.
               </p>
             </div>
             <Button

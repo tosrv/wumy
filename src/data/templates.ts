@@ -1,10 +1,5 @@
 export type CategoryId =
-  | "minimal"
-  | "editorial"
-  | "romantic"
-  | "playful"
-  | "modern"
-  | "traditional";
+  "minimal" | "editorial" | "romantic" | "playful" | "modern" | "traditional";
 
 export interface TemplateCategory {
   id: CategoryId;
@@ -141,9 +136,7 @@ export const landingTemplates = invitationTemplates.filter(
   (template) => template.featuredOnLanding,
 );
 
-export function getCategoryById(
-  id: CategoryId | string | undefined,
-): TemplateCategory | undefined {
+export function getCategoryById(id: CategoryId | string | undefined): TemplateCategory | undefined {
   if (!id) return undefined;
   return templateCategories.find((category) => category.id === id);
 }
@@ -152,9 +145,7 @@ export function getTemplateStyleClass(categoryId: CategoryId): string {
   return `template-${categoryId}`;
 }
 
-export function getTemplateById(
-  id: string | undefined,
-): InvitationTemplate | undefined {
+export function getTemplateById(id: string | undefined): InvitationTemplate | undefined {
   if (!id) return undefined;
   return invitationTemplates.find((template) => template.id === id);
 }
@@ -163,11 +154,7 @@ export function templateExists(id: string): boolean {
   return invitationTemplates.some((template) => template.id === id);
 }
 
-export function getTemplatesByCategory(
-  categoryId: CategoryId | "all",
-): InvitationTemplate[] {
+export function getTemplatesByCategory(categoryId: CategoryId | "all"): InvitationTemplate[] {
   if (categoryId === "all") return invitationTemplates;
-  return invitationTemplates.filter(
-    (template) => template.categoryId === categoryId,
-  );
+  return invitationTemplates.filter((template) => template.categoryId === categoryId);
 }
