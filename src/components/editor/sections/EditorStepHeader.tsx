@@ -3,11 +3,6 @@ import type { EditorStringKey } from "@/lib/editor-i18n";
 
 export const EDITOR_STEPS = [
   {
-    id: "template",
-    labelKey: "stepTemplate",
-    description: "Select a visual direction for your digital invitation.",
-  },
-  {
     id: "partners",
     labelKey: "stepPartners",
     description: "Couple names and your public invitation URL.",

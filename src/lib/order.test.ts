@@ -41,8 +41,7 @@ describe("ensureOrderInvitation", () => {
     mocks.updateInvitationTemplate.mockResolvedValue({ ...inv, template_id: "romantic" });
     const r = await ensureOrderInvitation("u1", "romantic");
     expect(mocks.updateInvitationTemplate).toHaveBeenCalledWith("i1", "romantic");
-    expect(r.redirectToEditor).toBe(false);
-    expect(r.invitation.template_id).toBe("romantic");
+    expect(r).toMatchObject({ redirectToEditor: false, invitation: { template_id: "romantic" } });
   });
 
   it("keeps the current template for an unknown template id", async () => {
@@ -50,10 +49,17 @@ describe("ensureOrderInvitation", () => {
     mocks.listMyInvitations.mockResolvedValue([inv]);
     const r = await ensureOrderInvitation("u1", "nope");
     expect(mocks.updateInvitationTemplate).not.toHaveBeenCalled();
-    expect(r.invitation).toBe(inv);
+    expect(r).toMatchObject({ invitation: inv });
   });
 
-  it("creates a draft with the first template when none exists and the id is unknown", async () => {
+  it("asks for a template first when none exists and no valid id is given", async () => {
+    mocks.listMyInvitations.mockResolvedValue([]);
+    expect(await ensureOrderInvitation("u1", "nope")).toEqual({ needsTemplate: true });
+    expect(await ensureOrderInvitation("u1")).toEqual({ needsTemplate: true });
+    expect(mocks.createDraftInvitation).not.toHaveBeenCalled();
+  });
+
+  it("creates a draft with the chosen template when none exists", async () => {
     mocks.listMyInvitations.mockResolvedValue([]);
     mocks.createDraftInvitation.mockImplementation(
       async (_u: string, i: { templateId: string }) => ({
@@ -62,10 +68,10 @@ describe("ensureOrderInvitation", () => {
         payment_status: "unpaid",
       }),
     );
-    const r = await ensureOrderInvitation("u1", "nope");
-    expect(mocks.createDraftInvitation.mock.calls[0]![1].templateId).toBe("minimal");
+    const r = await ensureOrderInvitation("u1", "romantic");
+    expect(mocks.createDraftInvitation.mock.calls[0]![1].templateId).toBe("romantic");
     expect(mocks.createDraftInvitation.mock.calls[0]![1].slug).toMatch(/^draft-/);
-    expect(r.redirectToEditor).toBe(false);
+    expect(r).toMatchObject({ redirectToEditor: false });
   });
 
   it("shares one run between concurrent calls for the same user", async () => {
@@ -75,7 +81,10 @@ describe("ensureOrderInvitation", () => {
       template_id: "minimal",
       payment_status: "unpaid",
     });
-    const [a, b] = await Promise.all([ensureOrderInvitation("u1"), ensureOrderInvitation("u1")]);
+    const [a, b] = await Promise.all([
+      ensureOrderInvitation("u1", "minimal"),
+      ensureOrderInvitation("u1", "minimal"),
+    ]);
     expect(mocks.createDraftInvitation).toHaveBeenCalledTimes(1);
     expect(a).toBe(b);
   });
@@ -86,13 +95,13 @@ describe("ensureOrderInvitation", () => {
     mocks.createDraftInvitation.mockRejectedValue(
       new Error('duplicate key value violates unique constraint "invitations_owner_unique"'),
     );
-    const r = await ensureOrderInvitation("u1");
+    const r = await ensureOrderInvitation("u1", "minimal");
     expect(r).toEqual({ invitation: inv, redirectToEditor: false });
   });
 
   it("rethrows other insert errors", async () => {
     mocks.listMyInvitations.mockResolvedValue([]);
     mocks.createDraftInvitation.mockRejectedValue(new Error("boom"));
-    await expect(ensureOrderInvitation("u1")).rejects.toThrow("boom");
+    await expect(ensureOrderInvitation("u1", "minimal")).rejects.toThrow("boom");
   });
 });

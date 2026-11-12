@@ -3,6 +3,7 @@ import { Outlet } from "@tanstack/react-router";
 import { useAuth } from "@/lib/auth";
 import {
   checkIsAdmin,
+  changeInvitationTemplateAsAdmin,
   createInvitationForClient,
   generateStrongPassword,
   setClientPasswordAsAdmin,
@@ -37,7 +38,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { invitationTemplates } from "@/data/templates";
+import { getTemplateById, invitationTemplates } from "@/data/templates";
 import { PasswordInput } from "@/components/ui/password-input";
 import { PasswordRequirements } from "@/components/ui/password-requirements";
 import { isStrongPassword } from "@/lib/password";
@@ -47,7 +48,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { KeyRound, MoreHorizontal, BadgeCheck } from "lucide-react";
+import { KeyRound, MoreHorizontal, BadgeCheck, Palette } from "lucide-react";
 
 const dateFormat = new Intl.DateTimeFormat("en-GB", {
   day: "numeric",
@@ -231,6 +232,101 @@ function PageHeader({ title, description }: { title: string; description: string
 function PageBody({ children }: { children: ReactNode }) {
   return (
     <main className="flex w-full flex-1 flex-col px-4 py-6 pb-16 md:px-8 md:py-8">{children}</main>
+  );
+}
+
+function ChangeTemplateDialog({
+  invitation,
+  onClose,
+  onDone,
+}: {
+  invitation: AdminInvitation | null;
+  onClose: () => void;
+  onDone: (message: string) => void;
+}) {
+  const [templateId, setTemplateId] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setTemplateId(invitation?.templateId ?? "");
+    setError(null);
+  }, [invitation]);
+
+  async function submit() {
+    if (!invitation) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const result = await changeInvitationTemplateAsAdmin(invitation.id, templateId);
+      if ("error" in result) {
+        setError(result.error);
+        return;
+      }
+      const name = getTemplateById(templateId)?.name ?? templateId;
+      onDone(
+        result.changed
+          ? `/${invitation.slug} now uses the ${name} template.`
+          : `/${invitation.slug} already uses ${name}.`,
+      );
+    } catch (err) {
+      console.error(err);
+      setError("Failed to change the template. Try again.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <Dialog open={invitation !== null} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Change template for /{invitation?.slug}</DialogTitle>
+          <DialogDescription>
+            Only the look changes; names, events, photos, and texts stay. A published invitation
+            switches right away.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="grid gap-1.5">
+          <Label htmlFor="ct-template">Template</Label>
+          <select
+            id="ct-template"
+            value={templateId}
+            onChange={(e) => setTemplateId(e.target.value)}
+            className="h-9 rounded-md border border-input bg-transparent px-3 text-sm shadow-sm"
+          >
+            {invitationTemplates.map((tpl) => (
+              <option key={tpl.id} value={tpl.id}>
+                {tpl.name}
+                {tpl.id === invitation?.templateId ? " (current)" : ""}
+              </option>
+            ))}
+          </select>
+          {templateId && (
+            <a
+              href={`/demo/${templateId}`}
+              target="_blank"
+              rel="noreferrer"
+              className="text-sm text-muted-foreground underline underline-offset-2"
+            >
+              Preview this template
+            </a>
+          )}
+        </div>
+        {error && <p className="text-sm text-destructive">{error}</p>}
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose} disabled={busy}>
+            Cancel
+          </Button>
+          <Button
+            onClick={() => void submit()}
+            disabled={busy || !templateId || templateId === invitation?.templateId}
+          >
+            {busy ? "Saving…" : "Change template"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -499,6 +595,7 @@ export function AdminInvitationsPage() {
   const [notice, setNotice] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
   const [passwordTarget, setPasswordTarget] = useState<AdminInvitation | null>(null);
+  const [templateTarget, setTemplateTarget] = useState<AdminInvitation | null>(null);
   const [searchInput, setSearchInput] = useState("");
   const [search, setSearch] = useState("");
   const [target, setTarget] = useState<AdminInvitation | null>(null);
@@ -548,6 +645,7 @@ export function AdminInvitationsPage() {
                 <TableHead>Slug</TableHead>
                 <TableHead>Couple</TableHead>
                 <TableHead>Owner</TableHead>
+                <TableHead>Template</TableHead>
                 <TableHead>Payment</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Created</TableHead>
@@ -575,6 +673,9 @@ export function AdminInvitationsPage() {
                     {[inv.partnerA, inv.partnerB].filter(Boolean).join(" & ") || "—"}
                   </TableCell>
                   <TableCell className="text-muted-foreground">{inv.ownerEmail ?? "—"}</TableCell>
+                  <TableCell className="whitespace-nowrap">
+                    {getTemplateById(inv.templateId)?.name ?? inv.templateId}
+                  </TableCell>
                   <TableCell>
                     <StatusBadge status={inv.paymentStatus} />
                   </TableCell>
@@ -598,6 +699,10 @@ export function AdminInvitationsPage() {
                             Mark as paid
                           </DropdownMenuItem>
                         )}
+                        <DropdownMenuItem onClick={() => setTemplateTarget(inv)}>
+                          <Palette />
+                          Change template
+                        </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => setPasswordTarget(inv)}>
                           <KeyRound />
                           Set password
@@ -612,6 +717,15 @@ export function AdminInvitationsPage() {
         </div>
       </ListState>
       <Pager page={list.page} hasMore={list.hasMore} onChange={list.setPage} />
+      <ChangeTemplateDialog
+        invitation={templateTarget}
+        onClose={() => setTemplateTarget(null)}
+        onDone={(message) => {
+          setTemplateTarget(null);
+          setNotice(message);
+          void list.reload();
+        }}
+      />
       <SetPasswordDialog
         invitation={passwordTarget}
         onClose={() => setPasswordTarget(null)}

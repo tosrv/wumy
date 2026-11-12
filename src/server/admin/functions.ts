@@ -146,3 +146,29 @@ export const adminSetClientPassword = createServerFn({ method: "POST" })
       throw err;
     }
   });
+
+export const adminChangeInvitationTemplate = createServerFn({ method: "POST" })
+  .validator(
+    z.object({
+      accessToken: token,
+      invitationId: z.string().uuid(),
+      templateId: z.string().min(1).max(64),
+    }),
+  )
+  .handler(async ({ data }): Promise<{ changed: boolean } | { error: string }> => {
+    const { db, adminId } = await adminContext(data.accessToken);
+    const { changeInvitationTemplate, AdminActionError } = await import("./service");
+    const { templateExists } = await import("@/data/templates");
+    try {
+      return await changeInvitationTemplate(
+        db,
+        adminId,
+        data.invitationId,
+        data.templateId,
+        templateExists,
+      );
+    } catch (err) {
+      if (err instanceof AdminActionError) return { error: err.message };
+      throw err;
+    }
+  });
