@@ -3,6 +3,7 @@ import { useEffect, useRef, useState, type FormEvent } from "react";
 import { Link, useRouter } from "@tanstack/react-router";
 import { useAuth } from "@/lib/auth";
 import { isSafeNextPath } from "@/lib/safe-redirect";
+import { checkIsAdmin } from "@/lib/admin";
 import { PasswordInput } from "@/components/ui/password-input";
 import { PasswordRequirements } from "@/components/ui/password-requirements";
 import { isStrongPassword } from "@/lib/password";
@@ -36,7 +37,10 @@ export function AuthForm({ initialMode = "login", nextPath = "/dashboard" }: Aut
 
   function goNext() {
     const target = isSafeNextPath(nextPath) ? nextPath : "/dashboard";
-    void router.navigate({ href: target });
+    // Admin accounts land on /admin instead of the customer dashboard.
+    void checkIsAdmin().then((isAdmin) =>
+      router.navigate({ href: isAdmin && target.startsWith("/dashboard") ? "/admin" : target }),
+    );
   }
 
   // Supabase reports OAuth failures (e.g. the user cancelled) in the redirect URL.

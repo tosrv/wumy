@@ -22,10 +22,28 @@ async function requireToken(): Promise<string> {
   return token;
 }
 
+// One check per signed-in user per page load; customer pages call this on every visit.
+const adminChecks = new Map<string, Promise<boolean>>();
+
+/** Whether the signed-in user is an admin. Cached per user; false when signed out or on error. */
 export async function checkIsAdmin(): Promise<boolean> {
-  const token = await accessToken();
-  if (!token) return false;
-  return (await getAdminStatus({ data: { accessToken: token } })).isAdmin;
+  const supabase = getSupabaseBrowserClient();
+  if (!supabase) return false;
+  const { data } = await supabase.auth.getSession();
+  const session = data.session;
+  if (!session) return false;
+
+  let check = adminChecks.get(session.user.id);
+  if (!check) {
+    check = getAdminStatus({ data: { accessToken: session.access_token } })
+      .then((r) => r.isAdmin)
+      .catch(() => {
+        adminChecks.delete(session.user.id);
+        return false;
+      });
+    adminChecks.set(session.user.id, check);
+  }
+  return check;
 }
 
 export async function fetchAdminInvitations(page: number, search?: string) {
