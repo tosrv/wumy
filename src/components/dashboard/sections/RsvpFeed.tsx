@@ -245,7 +245,7 @@ export function RsvpFeed({
             type="button"
             disabled={page <= 1}
             onClick={() => onPageChange(page - 1)}
-            className="flex size-9 items-center justify-center rounded-xl bg-electric-lime text-charcoal hover:bg-electric-lime/80 transition-all disabled:opacity-40"
+            className="flex size-9 items-center justify-center rounded-xl bg-foreground text-background hover:bg-foreground/90 transition-all disabled:opacity-40"
           >
             <ChevronLeft className="size-4" />
           </button>
@@ -262,8 +262,8 @@ export function RsvpFeed({
                 className={cn(
                   "flex size-9 items-center justify-center rounded-xl text-xs font-bold transition-all",
                   p === page
-                    ? "bg-charcoal text-white"
-                    : "bg-electric-lime text-charcoal hover:bg-electric-lime/80",
+                    ? "bg-accent text-accent-foreground"
+                    : "bg-foreground text-background hover:bg-foreground/90",
                 )}
               >
                 {p}
@@ -274,7 +274,7 @@ export function RsvpFeed({
             type="button"
             disabled={page >= totalPages}
             onClick={() => onPageChange(page + 1)}
-            className="flex size-9 items-center justify-center rounded-xl bg-electric-lime text-charcoal hover:bg-electric-lime/80 transition-all disabled:opacity-40"
+            className="flex size-9 items-center justify-center rounded-xl bg-foreground text-background hover:bg-foreground/90 transition-all disabled:opacity-40"
           >
             <ChevronRight className="size-4" />
           </button>
