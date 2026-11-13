@@ -13,6 +13,15 @@ export {
   type MusicState,
 } from "./music-state";
 export { MusicToggle } from "./MusicToggle";
+export { ParticleField } from "./ParticleField";
+export {
+  particleCount,
+  spawnParticle,
+  stepParticle,
+  type Particle,
+  type ParticleDensity,
+  type ParticleKind,
+} from "./particles";
 export { RsvpForm, type RsvpFormApi, type RsvpStatus } from "./RsvpForm";
 export { TemplateFonts } from "./TemplateFonts";
 export { useBackgroundMusic } from "./useBackgroundMusic";
