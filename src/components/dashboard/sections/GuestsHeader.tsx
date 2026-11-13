@@ -47,12 +47,7 @@ export function GuestsHeader({
       <div className="flex flex-wrap items-center gap-2 self-start md:self-auto">
         {hasInvitation ? (
           <>
-            <Button
-              type="button"
-              variant="outline"
-              className="h-10 rounded-xl bg-card shadow-sm"
-              onClick={onImport}
-            >
+            <Button type="button" variant="outline" className="h-10 rounded-xl" onClick={onImport}>
               <Upload className="size-4 text-muted-foreground" />
               Import CSV
             </Button>

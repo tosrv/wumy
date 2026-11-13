@@ -100,7 +100,7 @@ export function EditorShell({
             <Button
               type="button"
               variant="outline"
-              className="hidden h-9 rounded-xl bg-card shadow-sm sm:inline-flex"
+              className="hidden h-9 rounded-xl sm:inline-flex"
               disabled={saving}
               onClick={onSave}
             >

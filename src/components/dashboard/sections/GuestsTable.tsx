@@ -139,7 +139,7 @@ export function GuestsTable({
               type="button"
               size="sm"
               variant="secondary"
-              className="h-8 rounded-lg bg-card text-foreground shadow-sm"
+              className="h-8 rounded-lg bg-electric-lime text-charcoal hover:bg-electric-lime/80"
               onClick={() => {
                 const first = guests.find((g) => selectedIds.has(g.id));
                 if (first) openWhatsApp(first);
@@ -152,7 +152,7 @@ export function GuestsTable({
               type="button"
               size="sm"
               variant="secondary"
-              className="h-8 rounded-lg bg-card text-foreground shadow-sm"
+              className="h-8 rounded-lg bg-electric-lime text-charcoal hover:bg-electric-lime/80"
               disabled
             >
               <Tag className="size-3.5" />
