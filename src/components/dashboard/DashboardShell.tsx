@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth";
+import { getDisplayName } from "@/lib/display-name";
 import { daysUntilWedding, listMyInvitations, type InvitationRow } from "@/lib/invitations";
 import { useAppBreakpoint } from "@/hooks/use-app-breakpoint";
 import { cn } from "@/lib/utils";
@@ -98,10 +99,7 @@ function isActivePath(pathname: string, to: string) {
 
 function useUserDisplay() {
   const { user } = useAuth();
-  const displayName =
-    (user?.user_metadata?.["full_name"] as string | undefined)?.trim() ||
-    user?.email?.split("@")[0] ||
-    "Account";
+  const displayName = getDisplayName(user, "Account");
   const email = user?.email ?? "";
   const initials = displayName
     .split(/\s+/)
