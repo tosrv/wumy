@@ -1,7 +1,7 @@
-import type { ReactNode } from "react";
+import { Children, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
-import { useReveal } from "@/templates/shared";
-import { DiamondDivider } from "./ornaments";
+import { staggerDelayMs, useReveal } from "@/templates/shared";
+import { HeadingOrnament, SectionDivider } from "./ornaments";
 
 /** Traditional palette and type, shared by the section files. */
 export const T = {
@@ -30,28 +30,42 @@ export const T = {
 export const FONTS_HREF =
   "https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Great+Vibes&display=swap";
 
-/** Section wrapper: fades and lifts 16 px into view once. */
+const REVEAL = "transition-[opacity,transform] duration-700 ease-out motion-reduce:transition-none";
+
+/**
+ * Section wrapper: fades and lifts 16 px into view once. With `stagger`, each direct
+ * child does that in turn (120 ms apart) instead of the section as a whole.
+ */
 export function Section({
   children,
   className,
   testId,
+  stagger = false,
 }: {
   children: ReactNode;
   className?: string;
   testId?: string;
+  stagger?: boolean;
 }) {
   const { ref, visible } = useReveal<HTMLElement>();
+  const shown = visible ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0";
   return (
     <section
       ref={ref}
       data-testid={testId}
-      className={cn(
-        "px-6 py-16 transition-[opacity,transform] duration-700 ease-out motion-reduce:transition-none",
-        visible ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0",
-        className,
-      )}
+      className={cn("px-6 py-16", !stagger && [REVEAL, shown], className)}
     >
-      {children}
+      {stagger
+        ? Children.toArray(children).map((child, i) => (
+            <div
+              key={i}
+              className={cn(REVEAL, shown)}
+              style={{ transitionDelay: visible ? `${staggerDelayMs(i)}ms` : "0ms" }}
+            >
+              {child}
+            </div>
+          ))
+        : children}
     </section>
   );
 }
@@ -60,6 +74,7 @@ export function Section({
 export function SectionTitle({ kicker, title }: { kicker: string; title: string }) {
   return (
     <div className="mb-10 text-center">
+      <HeadingOrnament className="mx-auto mb-3 h-7 w-16" />
       <p className={cn(T.serif, T.muted, "text-[15px] italic")}>{kicker}</p>
       <h2
         className={cn(
@@ -70,7 +85,7 @@ export function SectionTitle({ kicker, title }: { kicker: string; title: string 
       >
         {title}
       </h2>
-      <DiamondDivider className="mx-auto mt-4 h-4 w-36" />
+      <SectionDivider className="mx-auto mt-4 h-5 w-44" />
     </div>
   );
 }

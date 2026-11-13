@@ -21,8 +21,10 @@ export function Opening({ data }: D) {
   const quote = data.quote.trim();
   if (!greeting && !quote) return null;
   return (
-    <Section className="pt-12 text-center">
-      <Gunungan className="mx-auto h-16 w-24" />
+    <Section stagger className="pt-12 text-center">
+      <div className="animate-wumy-float mx-auto w-fit">
+        <Gunungan className="animate-wumy-glow h-20 w-28" />
+      </div>
       <p className={cn(T.display, T.label, "mt-4")}>
         {templateLabel(data.locale, "openingKicker")}
       </p>
@@ -93,7 +95,7 @@ function Person({ partner, locale }: { partner: ViewPartner; locale: Locale }) {
 
 export function Couple({ data }: D) {
   return (
-    <Section>
+    <Section stagger>
       <SectionTitle
         kicker={templateLabel(data.locale, "coupleKicker")}
         title={templateLabel(data.locale, "coupleTitle")}
@@ -148,7 +150,7 @@ export function Events({ data }: D) {
   if (data.events.length === 0) return null;
   const names = `${data.partnerAName} & ${data.partnerBName}`;
   return (
-    <Section>
+    <Section stagger>
       <SectionTitle
         kicker={templateLabel(data.locale, "eventsKicker")}
         title={templateLabel(data.locale, "eventsTitle")}
@@ -277,7 +279,7 @@ export function Gallery({ data }: D) {
 export function Gifts({ data }: D) {
   if (data.gifts.length === 0) return null;
   return (
-    <Section>
+    <Section stagger>
       <SectionTitle
         kicker={templateLabel(data.locale, "giftKicker")}
         title={templateLabel(data.locale, "giftTitle")}
@@ -335,7 +337,7 @@ export function Rsvp({
 }: D & { onSubmit?: RsvpHandler; guestName?: string }) {
   const t = (k: Parameters<typeof templateLabel>[1]) => templateLabel(data.locale, k);
   return (
-    <Section>
+    <Section stagger>
       <SectionTitle kicker={t("rsvpKicker")} title={t("rsvpTitle")} />
       <RsvpForm
         locale={data.locale}
@@ -424,7 +426,7 @@ export function Rsvp({
 export function Closing({ data }: D) {
   const closing = data.closing.trim();
   return (
-    <Section className="pb-8 text-center">
+    <Section stagger className="pb-8 text-center">
       <p className={cn(T.display, T.label)}>{templateLabel(data.locale, "closingKicker")}</p>
       {closing && (
         <p className={cn(T.serif, "mt-6 text-[19px] italic leading-relaxed")}>{closing}</p>
