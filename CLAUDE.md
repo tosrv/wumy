@@ -55,12 +55,17 @@ Before committing, run `npx tsc --noEmit`, `npm test`, and `npm run lint` (0 err
 - `main`: production. `dev`: staging (`dev.wumy.my.id`, dev Supabase, DOKU sandbox).
 - Commit directly on `dev` and push to `origin dev`; no feature branches or PRs into `dev`. Pull first (`git pull --rebase origin dev`) and run the checks above before every push.
 - Use Conventional Commits, e.g. `fix(auth): ...`, `feat(staging): ...`, `docs: ...`, `chore: ...`. One logical change per commit, since the commit history is the change log.
-- Release to production only through a PR from `dev` to `main`; never push directly to `main`.
+- Release to production only through a PR from `dev` to `main` (merge with **Create a merge commit**, not squash or rebase); never push directly to `main`.
+- Never rewrite or force-push `dev` or `main` history.
 
 ### After the `dev` → `main` PR is merged
 
+Fast-forward `dev` to `main` so the two branches don't drift apart (otherwise `main` collects merge commits that `dev` lacks):
+
 ```bash
 git checkout dev
-git pull origin dev
+git pull --rebase origin dev
+git merge --ff-only origin/main
+git push origin dev
 git fetch --prune origin
 ```
