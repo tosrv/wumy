@@ -204,7 +204,7 @@ export function SettingsPage() {
             <Button
               type="button"
               variant="outline"
-              className="h-10 rounded-xl bg-card shadow-sm"
+              className="h-10 rounded-xl"
               disabled={savingPassword}
               onClick={() => void savePassword()}
             >
@@ -223,10 +223,10 @@ export function SettingsPage() {
           <h2 className="text-lg font-semibold tracking-tight">Quick links</h2>
           <p className="mt-1 text-sm text-muted-foreground">Jump to related account pages.</p>
           <div className="mt-4 flex flex-wrap gap-2">
-            <Button asChild variant="outline" className="h-10 rounded-xl bg-card shadow-sm">
+            <Button asChild variant="outline" className="h-10 rounded-xl">
               <Link to="/dashboard/billing">Billing</Link>
             </Button>
-            <Button asChild variant="outline" className="h-10 rounded-xl bg-card shadow-sm">
+            <Button asChild variant="outline" className="h-10 rounded-xl">
               <Link to="/dashboard/help">Help / Support</Link>
             </Button>
           </div>

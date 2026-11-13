@@ -130,7 +130,7 @@ export function AdminSettingsPage() {
             <Button
               type="button"
               variant="outline"
-              className="h-10 rounded-xl bg-card shadow-sm"
+              className="h-10 rounded-xl"
               disabled={saving}
               onClick={() => void savePassword()}
             >

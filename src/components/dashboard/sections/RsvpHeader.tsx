@@ -41,7 +41,7 @@ export function RsvpHeader({
         <Button
           type="button"
           variant="outline"
-          className="h-10 shrink-0 self-start rounded-xl bg-card shadow-sm lg:self-auto"
+          className="h-10 shrink-0 self-start rounded-xl lg:self-auto"
           onClick={onExport}
         >
           <Download className="size-4" />
