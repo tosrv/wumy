@@ -83,7 +83,7 @@ export function GuestsFilters({
             value={search}
             onChange={(e) => onSearchChange(e.target.value)}
             placeholder="Search guests by name, tag, or slug..."
-            className={cn(fieldClass, "h-10 pl-9 pr-8")}
+            className={cn(fieldClass, "pl-9 pr-8")}
           />
           {search ? (
             <button
@@ -99,7 +99,10 @@ export function GuestsFilters({
         <select
           value={group}
           onChange={(e) => onGroupChange(e.target.value)}
-          className={cn(selectFieldClass, "h-10 w-auto min-w-[140px] appearance-none pr-8")}
+          className={cn(
+            selectFieldClass,
+            "w-auto min-w-[140px] appearance-none pr-8 text-xs font-semibold md:text-xs",
+          )}
         >
           <option value="all">All Groups</option>
           {groups.map((g) => (

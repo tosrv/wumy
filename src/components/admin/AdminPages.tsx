@@ -643,7 +643,7 @@ export function AdminInvitationsPage() {
           }}
         >
           <Input
-            className={cn(fieldClass, "h-10 max-w-xs")}
+            className={cn(fieldClass, "max-w-xs")}
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
             placeholder="Search by slug"
