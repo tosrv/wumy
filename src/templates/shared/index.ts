@@ -1,5 +1,6 @@
 export { AddToCalendar } from "./AddToCalendar";
 export { CopyButton } from "./CopyButton";
+export { DriftPattern } from "./DriftPattern";
 export { buildIcs, icsFileName, type IcsInput } from "./ics";
 export { countdownParts, type CountdownParts } from "./countdown";
 export { Lightbox } from "./Lightbox";
@@ -23,6 +24,7 @@ export {
   type ParticleKind,
 } from "./particles";
 export { RsvpForm, type RsvpFormApi, type RsvpStatus } from "./RsvpForm";
+export { staggerDelayMs } from "./stagger";
 export { TemplateFonts } from "./TemplateFonts";
 export { useBackgroundMusic } from "./useBackgroundMusic";
 export { useCountdown } from "./useCountdown";
