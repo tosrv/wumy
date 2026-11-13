@@ -104,13 +104,16 @@ export function RsvpFilters({
             value={search}
             onChange={(e) => onSearchChange(e.target.value)}
             placeholder="Search name or message..."
-            className={cn(fieldClass, "h-10 pl-9")}
+            className={cn(fieldClass, "pl-9")}
           />
         </div>
         <select
           value={circle}
           onChange={(e) => onCircleChange(e.target.value)}
-          className={cn(selectFieldClass, "h-10 w-auto appearance-none pr-8")}
+          className={cn(
+            selectFieldClass,
+            "w-auto appearance-none pr-8 text-xs font-semibold md:text-xs",
+          )}
         >
           <option value="all">All Groups</option>
           {circles.map((c) => (
@@ -122,7 +125,10 @@ export function RsvpFilters({
         <select
           value={sort}
           onChange={(e) => onSortChange(e.target.value as RsvpSort)}
-          className={cn(selectFieldClass, "h-10 w-auto appearance-none pr-8")}
+          className={cn(
+            selectFieldClass,
+            "w-auto appearance-none pr-8 text-xs font-semibold md:text-xs",
+          )}
         >
           <option value="newest">Newest first</option>
           <option value="oldest">Oldest first</option>
