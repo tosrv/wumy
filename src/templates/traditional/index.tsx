@@ -178,7 +178,7 @@ function Cover({
       <Door side="right" opening={opening} />
       <div
         className={cn(
-          "relative flex h-full flex-col items-center justify-center px-12 text-center transition-opacity duration-300 ease-out motion-reduce:transition-none",
+          "relative flex h-full flex-col items-center justify-center-safe overflow-y-auto px-12 py-10 text-center transition-opacity duration-300 ease-out motion-reduce:transition-none",
           opening ? "opacity-0" : "opacity-100",
         )}
       >
@@ -192,7 +192,7 @@ function Cover({
             className={cn(
               T.script,
               T.gold,
-              "mt-4 w-full text-[clamp(40px,12vw,54px)] leading-[1.1] [overflow-wrap:anywhere]",
+              "mt-4 w-full text-[clamp(32px,min(12vw,7svh),54px)] leading-[1.1] [overflow-wrap:anywhere]",
             )}
           >
             <span className="block">{data.partnerAName}</span>
