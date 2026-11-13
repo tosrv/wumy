@@ -13,9 +13,13 @@ export const T = {
   card: "relative border border-[#c9a45c]/70 bg-[#33241a] shadow-[0_18px_40px_-24px_rgba(0,0,0,0.8)]",
   display: "font-[family-name:'Cinzel',Georgia,serif]",
   serif: "font-[family-name:'Cormorant_Garamond',Georgia,serif]",
+  /** Script face for the couple's names on the cover and opening. */
+  script: "font-[family-name:'Great_Vibes','Brush_Script_MT',cursive] font-normal normal-case",
+  /** Warm gold gradient for primary buttons. */
+  goldButton: "bg-[linear-gradient(#e9c977,#b98c3a)] text-[#2b1d14] hover:brightness-110",
   label: "text-[11px] font-semibold uppercase tracking-[0.34em] text-[#c9a45c]",
   button:
-    "inline-flex min-h-11 items-center justify-center bg-[#c9a45c] px-7 font-[family-name:'Cinzel',Georgia,serif] text-[13px] font-semibold uppercase tracking-[0.2em] text-[#2b1d14] transition hover:bg-[#d8b56d] disabled:opacity-60",
+    "inline-flex min-h-11 items-center justify-center bg-[linear-gradient(#e9c977,#b98c3a)] px-7 font-[family-name:'Cinzel',Georgia,serif] text-[13px] font-semibold uppercase tracking-[0.2em] text-[#2b1d14] shadow-[0_8px_24px_-12px_rgba(233,201,119,0.7)] transition hover:brightness-110 disabled:opacity-60",
   ghost:
     "inline-flex min-h-11 items-center justify-center border border-[#c9a45c] px-5 font-[family-name:'Cinzel',Georgia,serif] text-[12px] font-semibold uppercase tracking-[0.16em] text-[#c9a45c] transition hover:bg-[#c9a45c]/10",
   /** Background-music toggle: palette colours, icon contrast >= 3:1. */
@@ -24,7 +28,7 @@ export const T = {
 } as const;
 
 export const FONTS_HREF =
-  "https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&display=swap";
+  "https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Great+Vibes&display=swap";
 
 /** Section wrapper: fades and lifts 16 px into view once. */
 export function Section({

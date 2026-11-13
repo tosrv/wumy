@@ -1,18 +1,21 @@
 /**
- * Traditional template (product id: `traditional`) — "Keraton gold".
- * Dark wood ground, double gold frame, gunungan ornament, Cinzel names.
+ * Traditional template (product id: `traditional`) — "Keraton Emas".
+ * Dark wood ground with a drifting kawung field, gold dust, carved gebyok doors that
+ * swing open, a slowly turning medallion, and script names.
  */
 import type { InvitationViewModel } from "@/components/invitations/types";
 import { cn } from "@/lib/utils";
 import {
+  DriftPattern,
   MusicToggle,
+  ParticleField,
   TemplateFonts,
   useBackgroundMusic,
   useOpenGate,
   type TemplateSkinProps,
 } from "@/templates/shared";
 import { templateLabel } from "../labels";
-import { Gunungan, SideFlourish } from "./ornaments";
+import { CoverMedallion, GebyokPanel, KawungPattern } from "./ornaments";
 import { FONTS_HREF, T } from "./parts";
 import {
   Closing,
@@ -26,6 +29,12 @@ import {
   Story,
 } from "./sections";
 
+/** Door swing length; longer than the shared default so the 3D swing reads. */
+export const TRADITIONAL_OPEN_MS = 1300;
+
+/** Gold dust colour as `r g b` for `ParticleField`. */
+const DUST = "240 205 120";
+
 export function TraditionalInvitation({
   data,
   startOpened = false,
@@ -34,7 +43,10 @@ export function TraditionalInvitation({
   rsvpGuestName,
   className,
 }: TemplateSkinProps) {
-  const { open, opening, openGate, mainRef, userOpened } = useOpenGate({ startOpened });
+  const { open, opening, openGate, mainRef, userOpened } = useOpenGate({
+    startOpened,
+    durationMs: TRADITIONAL_OPEN_MS,
+  });
   const music = useBackgroundMusic(data.music, { userOpened });
   const guest = rsvpGuestName ?? data.guestName;
 
@@ -64,12 +76,13 @@ export function TraditionalInvitation({
         tabIndex={-1}
         aria-hidden={!open}
         className={cn(
-          "relative mx-auto outline-none max-w-[480px] border-x border-[#c9a45c]/25 transition-opacity duration-700 motion-reduce:transition-none",
+          "relative isolate mx-auto outline-none max-w-[480px] border-x border-[#c9a45c]/25 transition-opacity duration-700 motion-reduce:transition-none",
           open ? "opacity-100" : "pointer-events-none opacity-0",
         )}
       >
         {open && (
           <>
+            <AmbientLayer embedded={embedded} />
             <Opening data={data} />
             <Couple data={data} />
             <Countdown data={data} />
@@ -98,34 +111,44 @@ export function TraditionalInvitation({
   );
 }
 
-/** One half of the gate: dark ground with the double frame, clipped to its side. */
-function GatePanel({ side, opening }: { side: "left" | "right"; opening: boolean }) {
-  const left = side === "left";
+/**
+ * Background behind the opened invitation: drifting kawung and a little gold dust.
+ * Pinned to the viewport on the public page so the layers stay screen-sized on long
+ * pages; inside the editor preview it fills the preview and skips the particles.
+ */
+function AmbientLayer({ embedded }: { embedded: boolean }) {
   return (
     <div
       aria-hidden
       className={cn(
-        T.bg,
-        "absolute inset-y-0 w-1/2 overflow-hidden transition-transform duration-[900ms] ease-in-out motion-reduce:transition-none",
-        left ? "left-0" : "right-0",
-        opening ? (left ? "-translate-x-full" : "translate-x-full") : "translate-x-0",
+        "pointer-events-none -z-10",
+        embedded
+          ? "absolute inset-0"
+          : "fixed inset-y-0 left-1/2 w-full max-w-[480px] -translate-x-1/2",
       )}
     >
-      <div className={cn("absolute inset-y-0 w-[200%]", left ? "left-0" : "right-0")}>
-        <div className="absolute inset-3 border border-[#c9a45c]" />
-        <div className="absolute inset-[18px] border border-[#c9a45c]/60" />
-        <SideFlourish className="absolute left-6 top-1/2 h-60 w-6 -translate-y-1/2 opacity-35" />
-        <SideFlourish className="absolute right-6 top-1/2 h-60 w-6 -translate-y-1/2 opacity-35" />
-        <Gunungan className="absolute left-1/2 top-7 h-20 w-32 -translate-x-1/2" />
-        <Gunungan flip className="absolute bottom-7 left-1/2 h-20 w-32 -translate-x-1/2" />
-      </div>
-      <div
-        className={cn(
-          "absolute inset-y-0 w-px bg-[#c9a45c]/50",
-          left ? "right-0" : "left-0",
-          opening ? "opacity-100" : "opacity-0",
-        )}
-      />
+      <DriftPattern>
+        <KawungPattern className="h-full w-full" />
+      </DriftPattern>
+      {!embedded && <ParticleField kind="gold-dust" density="ambient" color={DUST} />}
+    </div>
+  );
+}
+
+/** One gebyok door leaf; swings open around its outer edge. */
+function Door({ side, opening }: { side: "left" | "right"; opening: boolean }) {
+  const left = side === "left";
+  return (
+    <div
+      aria-hidden
+      style={{ transitionDuration: `${TRADITIONAL_OPEN_MS}ms` }}
+      className={cn(
+        "absolute inset-y-0 w-1/2 transition-transform ease-[cubic-bezier(.7,0,.2,1)] [backface-visibility:hidden] motion-reduce:transition-none",
+        left ? "left-0 origin-left" : "right-0 origin-right",
+        opening && (left ? "[transform:rotateY(-100deg)]" : "[transform:rotateY(100deg)]"),
+      )}
+    >
+      <GebyokPanel side={side} />
     </div>
   );
 }
@@ -146,41 +169,40 @@ function Cover({
   return (
     <section
       data-testid="cover"
-      className={cn("z-[60] overflow-hidden", embedded ? "absolute inset-0" : "fixed inset-0")}
+      className={cn(
+        "z-[60] overflow-hidden [perspective:1200px]",
+        embedded ? "absolute inset-0" : "fixed inset-0",
+      )}
     >
-      <GatePanel side="left" opening={opening} />
-      <GatePanel side="right" opening={opening} />
+      <Door side="left" opening={opening} />
+      <Door side="right" opening={opening} />
       <div
         className={cn(
           "relative flex h-full flex-col items-center justify-center px-12 text-center transition-opacity duration-300 ease-out motion-reduce:transition-none",
           opening ? "opacity-0" : "opacity-100",
         )}
       >
-        <p className={cn(T.display, T.label, "tracking-[0.42em]")}>
-          {templateLabel(data.locale, "theWeddingOf")}
-        </p>
-        <h1
-          data-testid="cover-names"
-          className={cn(
-            T.display,
-            "mt-6 w-full max-w-[420px] text-[clamp(24px,7.4vw,30px)] font-semibold uppercase leading-[1.25] tracking-[0.12em] [overflow-wrap:anywhere]",
-          )}
-        >
-          <span className="block">{data.partnerAName}</span>
-          <span
+        <div className="relative isolate flex w-full max-w-[420px] flex-col items-center">
+          <CoverMedallion className="animate-wumy-spin pointer-events-none absolute left-1/2 top-1/2 -z-10 h-[300px] w-[300px] -translate-x-1/2 -translate-y-1/2 opacity-40" />
+          <p className={cn(T.display, T.label, "tracking-[0.42em]")}>
+            {templateLabel(data.locale, "theWeddingOf")}
+          </p>
+          <h1
+            data-testid="cover-names"
             className={cn(
-              T.serif,
+              T.script,
               T.gold,
-              "my-1 block text-[1.3em] font-normal normal-case italic",
+              "mt-4 w-full text-[clamp(40px,12vw,54px)] leading-[1.1] [overflow-wrap:anywhere]",
             )}
           >
-            &amp;
-          </span>
-          <span className="block">{data.partnerBName}</span>
-        </h1>
-        {data.weddingDateLabel && (
-          <p className={cn(T.serif, T.gold, "mt-6 text-[20px] italic")}>{data.weddingDateLabel}</p>
-        )}
+            <span className="block">{data.partnerAName}</span>
+            <span className={cn(T.serif, "my-1 block text-[0.55em] italic")}>&amp;</span>
+            <span className="block">{data.partnerBName}</span>
+          </h1>
+          {data.weddingDateLabel && (
+            <p className={cn(T.serif, "mt-5 text-[20px] italic")}>{data.weddingDateLabel}</p>
+          )}
+        </div>
         {guestName && (
           <div className="mt-8">
             <p className={cn(T.serif, T.muted, "text-[15px] italic")}>
@@ -195,6 +217,7 @@ function Cover({
           {templateLabel(data.locale, "openInvitation")}
         </button>
       </div>
+      <ParticleField kind="gold-dust" density="cover" color={DUST} className="z-10" />
     </section>
   );
 }
