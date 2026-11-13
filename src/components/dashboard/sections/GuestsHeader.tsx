@@ -48,7 +48,7 @@ export function GuestsHeader({
         {hasInvitation ? (
           <>
             <Button type="button" variant="outline" className="h-10 rounded-xl" onClick={onImport}>
-              <Upload className="size-4 text-muted-foreground" />
+              <Upload className="size-4" />
               Import CSV
             </Button>
             <Button
