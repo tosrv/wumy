@@ -129,8 +129,7 @@ export function AdminSettingsPage() {
           <div className="mt-5">
             <Button
               type="button"
-              variant="outline"
-              className="h-10 rounded-xl"
+              className="h-10 rounded-xl bg-accent text-accent-foreground hover:bg-accent/90"
               disabled={saving}
               onClick={() => void savePassword()}
             >

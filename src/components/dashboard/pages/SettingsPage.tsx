@@ -203,8 +203,7 @@ export function SettingsPage() {
           <div className="mt-5 flex flex-wrap items-center gap-3">
             <Button
               type="button"
-              variant="outline"
-              className="h-10 rounded-xl"
+              className="h-10 rounded-xl bg-accent text-accent-foreground hover:bg-accent/90"
               disabled={savingPassword}
               onClick={() => void savePassword()}
             >
