@@ -1,6 +1,7 @@
 import { Search, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
+import { fieldClass, selectFieldClass } from "@/components/ui/field-styles";
 
 export type GuestStatusFilter = "all" | "responded" | "pending";
 
@@ -82,7 +83,7 @@ export function GuestsFilters({
             value={search}
             onChange={(e) => onSearchChange(e.target.value)}
             placeholder="Search guests by name, tag, or slug..."
-            className="h-9 rounded-xl border-0 bg-secondary/70 pl-9 pr-8 text-sm shadow-none focus-visible:bg-card focus-visible:ring-1"
+            className={cn(fieldClass, "pl-9 pr-8")}
           />
           {search ? (
             <button
@@ -98,7 +99,10 @@ export function GuestsFilters({
         <select
           value={group}
           onChange={(e) => onGroupChange(e.target.value)}
-          className="h-9 min-w-[140px] appearance-none rounded-xl bg-secondary/70 px-3 pr-8 text-xs font-semibold text-foreground focus:outline-none"
+          className={cn(
+            selectFieldClass,
+            "w-auto min-w-[140px] appearance-none pr-8 text-xs font-semibold md:text-xs",
+          )}
         >
           <option value="all">All Groups</option>
           {groups.map((g) => (

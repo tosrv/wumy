@@ -1,9 +1,5 @@
-import { Check, Laptop, Smartphone } from "lucide-react";
-import {
-  getTemplateStyleClass,
-  invitationTemplates,
-  type InvitationTemplate,
-} from "@/data/templates";
+import { Laptop, Smartphone } from "lucide-react";
+import { getTemplateStyleClass, type InvitationTemplate } from "@/data/templates";
 import {
   hasInvitationRenderer,
   InvitationTemplateRenderer,
@@ -135,76 +131,6 @@ function PreviewBody({
           {[viewModel.venueName, viewModel.venueAddress].filter(Boolean).join(" · ") ||
             template.place}
         </p>
-      </div>
-    </div>
-  );
-}
-
-interface ThemeStepProps {
-  templateId: string;
-  onSelect: (id: string) => void;
-  partnerAName: string;
-  partnerBName: string;
-}
-
-export function EditorThemeStep({
-  templateId,
-  onSelect,
-  partnerAName,
-  partnerBName,
-}: ThemeStepProps) {
-  return (
-    <div className="flex flex-col gap-4 rounded-xl bg-card p-5 shadow-sm lg:p-6">
-      <div className="flex items-center justify-between gap-2">
-        <h2 className="text-lg font-semibold tracking-tight">Choose Wedding Aesthetic</h2>
-        <span className="text-[11px] font-bold text-muted-foreground">
-          {invitationTemplates.length} styles
-        </span>
-      </div>
-      <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2 xl:grid-cols-3">
-        {invitationTemplates.map((item) => {
-          const active = item.id === templateId;
-          return (
-            <button
-              key={item.id}
-              type="button"
-              onClick={() => onSelect(item.id)}
-              className={cn(
-                "relative flex flex-col gap-2.5 rounded-xl bg-secondary/50 p-3.5 text-left transition-all hover:shadow-md",
-                active ? "bg-secondary ring-2 ring-accent shadow-sm" : "hover:bg-secondary",
-              )}
-            >
-              <div
-                className={cn(
-                  "template-card relative aspect-[4/3] overflow-hidden rounded-lg",
-                  getTemplateStyleClass(item.categoryId),
-                )}
-              >
-                <div className="template-inner scale-90">
-                  <p className="template-couple text-sm leading-tight">
-                    {partnerAName || item.couple.split(" + ")[0] || "A"}
-                    {"\n+\n"}
-                    {partnerBName || item.couple.split(" + ")[1] || "B"}
-                  </p>
-                </div>
-                {active && (
-                  <span className="absolute right-2 top-2 flex size-5 items-center justify-center rounded-full bg-accent text-accent-foreground shadow-sm">
-                    <Check className="size-3.5" />
-                  </span>
-                )}
-              </div>
-              <div className="flex items-center justify-between gap-2">
-                <span className="text-xs font-bold">{item.name}</span>
-                {active && (
-                  <span className="rounded bg-accent/50 px-1.5 py-0.5 text-[10px] font-semibold text-accent-foreground">
-                    Active
-                  </span>
-                )}
-              </div>
-              <p className="text-[13px] leading-snug text-muted-foreground">{item.vibe}</p>
-            </button>
-          );
-        })}
       </div>
     </div>
   );

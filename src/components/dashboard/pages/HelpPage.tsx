@@ -54,7 +54,7 @@ export function HelpPage() {
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2 self-start lg:self-auto">
-            <Button asChild variant="outline" className="h-10 rounded-xl bg-card shadow-sm">
+            <Button asChild variant="outline" className="h-10 rounded-xl">
               <Link to="/faq">
                 <HelpCircle className="size-4" />
                 Full FAQ

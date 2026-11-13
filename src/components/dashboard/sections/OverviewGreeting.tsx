@@ -48,7 +48,7 @@ export function OverviewGreeting({ invitation, coupleLabel }: OverviewGreetingPr
       <div className="flex flex-wrap items-center gap-2 self-start lg:self-center">
         {invitation ? (
           <>
-            <Button variant="outline" className="h-10 rounded-xl bg-card shadow-sm" asChild>
+            <Button variant="outline" className="h-10 rounded-xl" asChild>
               {invitation.status === "published" && invitation.payment_status === "paid" ? (
                 <Link to="/$slug" params={{ slug: invitation.slug }}>
                   <Eye className="size-4" />

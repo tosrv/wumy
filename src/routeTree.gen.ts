@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SlugRouteImport } from './routes/$slug'
 import { Route as SiteRouteImport } from './routes/_site'
+import { Route as AdminRouteImport } from './routes/admin'
 import { Route as CreateRouteImport } from './routes/create'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as EditorRouteImport } from './routes/editor'
@@ -26,6 +27,11 @@ import { Route as SiteProductRouteImport } from './routes/_site/product'
 import { Route as SiteRefundRouteImport } from './routes/_site/refund'
 import { Route as SiteResetPasswordRouteImport } from './routes/_site/reset-password'
 import { Route as SiteTermsRouteImport } from './routes/_site/terms'
+import { Route as AdminIndexRouteImport } from './routes/admin.index'
+import { Route as AdminActivityRouteImport } from './routes/admin.activity'
+import { Route as AdminInvitationsRouteImport } from './routes/admin.invitations'
+import { Route as AdminPaymentsRouteImport } from './routes/admin.payments'
+import { Route as AdminSettingsRouteImport } from './routes/admin.settings'
 import { Route as DashboardIndexRouteImport } from './routes/dashboard.index'
 import { Route as DashboardBillingRouteImport } from './routes/dashboard.billing'
 import { Route as DashboardGuestsRouteImport } from './routes/dashboard.guests'
@@ -49,6 +55,11 @@ const SlugRoute = SlugRouteImport.update({
 } as any)
 const SiteRoute = SiteRouteImport.update({
   id: '/_site',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminRoute = AdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CreateRoute = CreateRouteImport.update({
@@ -125,6 +136,31 @@ const SiteTermsRoute = SiteTermsRouteImport.update({
   id: '/terms',
   path: '/terms',
   getParentRoute: () => SiteRoute,
+} as any)
+const AdminIndexRoute = AdminIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminActivityRoute = AdminActivityRouteImport.update({
+  id: '/activity',
+  path: '/activity',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminInvitationsRoute = AdminInvitationsRouteImport.update({
+  id: '/invitations',
+  path: '/invitations',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminPaymentsRoute = AdminPaymentsRouteImport.update({
+  id: '/payments',
+  path: '/payments',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminSettingsRoute = AdminSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => AdminRoute,
 } as any)
 const DashboardIndexRoute = DashboardIndexRouteImport.update({
   id: '/',
@@ -207,6 +243,7 @@ const DashboardInvitationInvitationIdRoute =
 export interface FileRoutesByFullPath {
   '/$slug': typeof SlugRoute
   '/': typeof SiteIndexRoute
+  '/admin': typeof AdminRouteWithChildren
   '/create': typeof CreateRoute
   '/dashboard': typeof DashboardRouteWithChildren
   '/editor': typeof EditorRouteWithChildren
@@ -221,6 +258,10 @@ export interface FileRoutesByFullPath {
   '/refund': typeof SiteRefundRoute
   '/reset-password': typeof SiteResetPasswordRoute
   '/terms': typeof SiteTermsRoute
+  '/admin/activity': typeof AdminActivityRoute
+  '/admin/invitations': typeof AdminInvitationsRoute
+  '/admin/payments': typeof AdminPaymentsRoute
+  '/admin/settings': typeof AdminSettingsRoute
   '/dashboard/billing': typeof DashboardBillingRoute
   '/dashboard/guests': typeof DashboardGuestsRoute
   '/dashboard/help': typeof DashboardHelpRoute
@@ -231,6 +272,7 @@ export interface FileRoutesByFullPath {
   '/editor/$invitationId': typeof EditorInvitationIdRoute
   '/invite/deni-bella': typeof InviteDeniBellaRoute
   '/payment/status': typeof PaymentStatusRoute
+  '/admin/': typeof AdminIndexRoute
   '/dashboard/': typeof DashboardIndexRoute
   '/editor/': typeof EditorIndexRoute
   '/api/webhooks/doku': typeof ApiWebhooksDokuRoute
@@ -251,6 +293,10 @@ export interface FileRoutesByTo {
   '/refund': typeof SiteRefundRoute
   '/reset-password': typeof SiteResetPasswordRoute
   '/terms': typeof SiteTermsRoute
+  '/admin/activity': typeof AdminActivityRoute
+  '/admin/invitations': typeof AdminInvitationsRoute
+  '/admin/payments': typeof AdminPaymentsRoute
+  '/admin/settings': typeof AdminSettingsRoute
   '/dashboard/billing': typeof DashboardBillingRoute
   '/dashboard/guests': typeof DashboardGuestsRoute
   '/dashboard/help': typeof DashboardHelpRoute
@@ -261,6 +307,7 @@ export interface FileRoutesByTo {
   '/invite/deni-bella': typeof InviteDeniBellaRoute
   '/payment/status': typeof PaymentStatusRoute
   '/': typeof SiteIndexRoute
+  '/admin': typeof AdminIndexRoute
   '/dashboard': typeof DashboardIndexRoute
   '/editor': typeof EditorIndexRoute
   '/api/webhooks/doku': typeof ApiWebhooksDokuRoute
@@ -271,6 +318,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/$slug': typeof SlugRoute
   '/_site': typeof SiteRouteWithChildren
+  '/admin': typeof AdminRouteWithChildren
   '/create': typeof CreateRoute
   '/dashboard': typeof DashboardRouteWithChildren
   '/editor': typeof EditorRouteWithChildren
@@ -285,6 +333,10 @@ export interface FileRoutesById {
   '/_site/refund': typeof SiteRefundRoute
   '/_site/reset-password': typeof SiteResetPasswordRoute
   '/_site/terms': typeof SiteTermsRoute
+  '/admin/activity': typeof AdminActivityRoute
+  '/admin/invitations': typeof AdminInvitationsRoute
+  '/admin/payments': typeof AdminPaymentsRoute
+  '/admin/settings': typeof AdminSettingsRoute
   '/dashboard/billing': typeof DashboardBillingRoute
   '/dashboard/guests': typeof DashboardGuestsRoute
   '/dashboard/help': typeof DashboardHelpRoute
@@ -296,6 +348,7 @@ export interface FileRoutesById {
   '/invite/deni-bella': typeof InviteDeniBellaRoute
   '/payment/status': typeof PaymentStatusRoute
   '/_site/': typeof SiteIndexRoute
+  '/admin/': typeof AdminIndexRoute
   '/dashboard/': typeof DashboardIndexRoute
   '/editor/': typeof EditorIndexRoute
   '/api/webhooks/doku': typeof ApiWebhooksDokuRoute
@@ -307,6 +360,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/$slug'
     | '/'
+    | '/admin'
     | '/create'
     | '/dashboard'
     | '/editor'
@@ -321,6 +375,10 @@ export interface FileRouteTypes {
     | '/refund'
     | '/reset-password'
     | '/terms'
+    | '/admin/activity'
+    | '/admin/invitations'
+    | '/admin/payments'
+    | '/admin/settings'
     | '/dashboard/billing'
     | '/dashboard/guests'
     | '/dashboard/help'
@@ -331,6 +389,7 @@ export interface FileRouteTypes {
     | '/editor/$invitationId'
     | '/invite/deni-bella'
     | '/payment/status'
+    | '/admin/'
     | '/dashboard/'
     | '/editor/'
     | '/api/webhooks/doku'
@@ -351,6 +410,10 @@ export interface FileRouteTypes {
     | '/refund'
     | '/reset-password'
     | '/terms'
+    | '/admin/activity'
+    | '/admin/invitations'
+    | '/admin/payments'
+    | '/admin/settings'
     | '/dashboard/billing'
     | '/dashboard/guests'
     | '/dashboard/help'
@@ -361,6 +424,7 @@ export interface FileRouteTypes {
     | '/invite/deni-bella'
     | '/payment/status'
     | '/'
+    | '/admin'
     | '/dashboard'
     | '/editor'
     | '/api/webhooks/doku'
@@ -370,6 +434,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/$slug'
     | '/_site'
+    | '/admin'
     | '/create'
     | '/dashboard'
     | '/editor'
@@ -384,6 +449,10 @@ export interface FileRouteTypes {
     | '/_site/refund'
     | '/_site/reset-password'
     | '/_site/terms'
+    | '/admin/activity'
+    | '/admin/invitations'
+    | '/admin/payments'
+    | '/admin/settings'
     | '/dashboard/billing'
     | '/dashboard/guests'
     | '/dashboard/help'
@@ -395,6 +464,7 @@ export interface FileRouteTypes {
     | '/invite/deni-bella'
     | '/payment/status'
     | '/_site/'
+    | '/admin/'
     | '/dashboard/'
     | '/editor/'
     | '/api/webhooks/doku'
@@ -405,6 +475,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   SlugRoute: typeof SlugRoute
   SiteRoute: typeof SiteRouteWithChildren
+  AdminRoute: typeof AdminRouteWithChildren
   CreateRoute: typeof CreateRoute
   DashboardRoute: typeof DashboardRouteWithChildren
   EditorRoute: typeof EditorRouteWithChildren
@@ -429,6 +500,13 @@ declare module '@tanstack/react-router' {
       path: ''
       fullPath: '/'
       preLoaderRoute: typeof SiteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/create': {
@@ -535,6 +613,41 @@ declare module '@tanstack/react-router' {
       fullPath: '/terms'
       preLoaderRoute: typeof SiteTermsRouteImport
       parentRoute: typeof SiteRoute
+    }
+    '/admin/': {
+      id: '/admin/'
+      path: '/'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AdminIndexRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/activity': {
+      id: '/admin/activity'
+      path: '/activity'
+      fullPath: '/admin/activity'
+      preLoaderRoute: typeof AdminActivityRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/invitations': {
+      id: '/admin/invitations'
+      path: '/invitations'
+      fullPath: '/admin/invitations'
+      preLoaderRoute: typeof AdminInvitationsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/payments': {
+      id: '/admin/payments'
+      path: '/payments'
+      fullPath: '/admin/payments'
+      preLoaderRoute: typeof AdminPaymentsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/settings': {
+      id: '/admin/settings'
+      path: '/settings'
+      fullPath: '/admin/settings'
+      preLoaderRoute: typeof AdminSettingsRouteImport
+      parentRoute: typeof AdminRoute
     }
     '/dashboard/': {
       id: '/dashboard/'
@@ -674,6 +787,24 @@ const SiteRouteChildren: SiteRouteChildren = {
 
 const SiteRouteWithChildren = SiteRoute._addFileChildren(SiteRouteChildren)
 
+interface AdminRouteChildren {
+  AdminActivityRoute: typeof AdminActivityRoute
+  AdminInvitationsRoute: typeof AdminInvitationsRoute
+  AdminPaymentsRoute: typeof AdminPaymentsRoute
+  AdminSettingsRoute: typeof AdminSettingsRoute
+  AdminIndexRoute: typeof AdminIndexRoute
+}
+
+const AdminRouteChildren: AdminRouteChildren = {
+  AdminActivityRoute: AdminActivityRoute,
+  AdminInvitationsRoute: AdminInvitationsRoute,
+  AdminPaymentsRoute: AdminPaymentsRoute,
+  AdminSettingsRoute: AdminSettingsRoute,
+  AdminIndexRoute: AdminIndexRoute,
+}
+
+const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
+
 interface DashboardInvitationRouteChildren {
   DashboardInvitationInvitationIdRoute: typeof DashboardInvitationInvitationIdRoute
   DashboardInvitationIndexRoute: typeof DashboardInvitationIndexRoute
@@ -727,6 +858,7 @@ const EditorRouteWithChildren =
 const rootRouteChildren: RootRouteChildren = {
   SlugRoute: SlugRoute,
   SiteRoute: SiteRouteWithChildren,
+  AdminRoute: AdminRouteWithChildren,
   CreateRoute: CreateRoute,
   DashboardRoute: DashboardRouteWithChildren,
   EditorRoute: EditorRouteWithChildren,

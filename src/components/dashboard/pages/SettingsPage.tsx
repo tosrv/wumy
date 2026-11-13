@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { Check, KeyRound, Mail, User } from "lucide-react";
 import { useAuth } from "@/lib/auth";
+import { getProfileName } from "@/lib/display-name";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,6 +10,8 @@ import { Label } from "@/components/ui/label";
 import { PasswordInput } from "@/components/ui/password-input";
 import { PasswordRequirements } from "@/components/ui/password-requirements";
 import { newPasswordIssue } from "@/lib/password";
+import { fieldClass } from "@/components/ui/field-styles";
+import { cn } from "@/lib/utils";
 
 export function SettingsPage() {
   const { user, configured } = useAuth();
@@ -24,7 +27,7 @@ export function SettingsPage() {
 
   useEffect(() => {
     if (!user) return;
-    setFullName((user.user_metadata?.["full_name"] as string | undefined)?.trim() || "");
+    setFullName(getProfileName(user));
     setEmail(user.email ?? "");
   }, [user]);
 
@@ -42,10 +45,20 @@ export function SettingsPage() {
     }
     setSavingProfile(true);
     try {
-      const { error: updateError } = await supabase.auth.updateUser({
-        data: { full_name: fullName.trim() },
+      const name = fullName.trim();
+      // `display_name`, not `full_name`: Google overwrites `full_name` on every sign-in.
+      const { data, error: updateError } = await supabase.auth.updateUser({
+        data: { display_name: name },
       });
       if (updateError) throw updateError;
+      // Keep profiles.full_name (used e.g. as the payer name) in sync.
+      if (data.user) {
+        const { error: profileError } = await supabase
+          .from("profiles")
+          .update({ full_name: name || null })
+          .eq("id", data.user.id);
+        if (profileError) throw profileError;
+      }
       setProfileMessage("Profile saved.");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to save profile.");
@@ -117,7 +130,7 @@ export function SettingsPage() {
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
                 placeholder="Your name"
-                className="h-10 rounded-xl bg-secondary/70"
+                className={cn(fieldClass, "h-10")}
               />
             </div>
             <div>
@@ -129,7 +142,7 @@ export function SettingsPage() {
                 <Input
                   value={email}
                   readOnly
-                  className="h-10 rounded-xl bg-secondary/70 pl-9 text-muted-foreground"
+                  className={cn(fieldClass, "h-10 pl-9 text-text-muted")}
                 />
               </div>
               <p className="mt-1.5 text-xs text-muted-foreground">
@@ -170,7 +183,7 @@ export function SettingsPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Create a strong password"
-                className="h-10 rounded-xl bg-secondary/70"
+                className={cn(fieldClass, "h-10")}
               />
               <PasswordRequirements password={password} lang="en" className="mt-2" />
             </div>
@@ -183,15 +196,14 @@ export function SettingsPage() {
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 placeholder="Repeat new password"
-                className="h-10 rounded-xl bg-secondary/70"
+                className={cn(fieldClass, "h-10")}
               />
             </div>
           </div>
           <div className="mt-5 flex flex-wrap items-center gap-3">
             <Button
               type="button"
-              variant="outline"
-              className="h-10 rounded-xl bg-card shadow-sm"
+              className="h-10 rounded-xl bg-accent text-accent-foreground hover:bg-accent/90"
               disabled={savingPassword}
               onClick={() => void savePassword()}
             >
@@ -210,10 +222,10 @@ export function SettingsPage() {
           <h2 className="text-lg font-semibold tracking-tight">Quick links</h2>
           <p className="mt-1 text-sm text-muted-foreground">Jump to related account pages.</p>
           <div className="mt-4 flex flex-wrap gap-2">
-            <Button asChild variant="outline" className="h-10 rounded-xl bg-card shadow-sm">
+            <Button asChild variant="outline" className="h-10 rounded-xl">
               <Link to="/dashboard/billing">Billing</Link>
             </Button>
-            <Button asChild variant="outline" className="h-10 rounded-xl bg-card shadow-sm">
+            <Button asChild variant="outline" className="h-10 rounded-xl">
               <Link to="/dashboard/help">Help / Support</Link>
             </Button>
           </div>

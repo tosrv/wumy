@@ -55,7 +55,6 @@ describe("stepStates", () => {
   it("marks optional empty steps as empty and missing required data as warning", () => {
     const v = blank();
     const s = stepStates(v, ctx(v));
-    expect(s.template).toBe("empty");
     expect(s.partners).toBe("warning");
     expect(s.events).toBe("warning");
     expect(s.gallery).toBe("empty");
@@ -68,7 +67,6 @@ describe("stepStates", () => {
     const v = filled();
     const s = stepStates(v, ctx(v, 2));
     expect(s).toEqual({
-      template: "complete",
       partners: "complete",
       events: "complete",
       gallery: "complete",
@@ -100,7 +98,6 @@ describe("stepSummary", () => {
 
   it("summarises filled steps", () => {
     const v = filled();
-    expect(stepSummary("template", v, sc(v))).toBe("Minimal");
     expect(stepSummary("partners", v, sc(v))).toBe("Ayu & Budi");
     expect(stepSummary("events", v, sc(v))).toBe("2 acara");
     expect(stepSummary("gallery", v, sc(v, 4))).toBe("4 foto");
@@ -110,7 +107,7 @@ describe("stepSummary", () => {
 
   it("falls back to 'Belum diisi' when empty", () => {
     const v = blank();
-    for (const id of ["template", "partners", "events", "gallery", "gifts", "review"] as const) {
+    for (const id of ["partners", "events", "gallery", "gifts", "review"] as const) {
       expect(stepSummary(id, v, sc(v))).toBe("Belum diisi");
     }
   });

@@ -4,7 +4,7 @@ Digital wedding invitations: public site, ordering + DOKU payments, editor, and 
 
 **Stack:** TanStack Start (React, SSR) on Vercel · Supabase (Postgres, Auth, Storage) · DOKU Checkout · PostHog (optional).
 
-**Customer flow:** template → demo → *Gunakan template ini* ("Use this template") → sign up/sign in → `/order` (pay) → editor → *Terbitkan* ("Publish") → share `/<slug>`.
+**Customer flow:** template → demo → *Gunakan template ini* ("Use this template") → sign up/sign in → `/order` (pay) → editor → *Terbitkan* ("Publish") → share `/<slug>`. Opening `/order` (e.g. *Create invitation* on the dashboard) without a chosen template and without an existing invitation sends the user to the catalog (`/product`) first. The template is fixed once ordered; only an admin can change it.
 
 ## Running locally
 
@@ -101,6 +101,27 @@ The `dev` branch is deployed as a Vercel **Preview** on the `dev.wumy.my.id` dom
 | Supabase / DOKU | dev project and sandbox keys (`DOKU_API_BASE=https://api-sandbox.doku.com`) |
 
 The staging lock (`src/server/staging/gate.ts`) requires Basic Auth on every page except `POST /api/webhooks/doku` (protected by the DOKU signature), and adds `X-Robots-Tag: noindex`. Production is unaffected because it has no `STAGING_PASSWORD`. Turn off Vercel Deployment Protection for Preview so DOKU sandbox webhooks can get through.
+
+## Admin (`/admin`)
+
+Admins can list invitations and payments, mark an invitation as paid without a DOKU payment (a free invitation, or a missed webhook), and see the activity log.
+
+- Admins are stored in `public.admin_users`. That table, and `public.admin_audit_log`, have RLS on with no policies, so only the server (service role) can read them.
+- Add an admin in the Supabase **SQL Editor** of each project (the user must have signed up first):
+  ```sql
+  insert into public.admin_users (user_id)
+  select id from auth.users where email = 'you@example.com';
+  ```
+  Remove one with `delete from public.admin_users where user_id = '<uuid>';`.
+- Use a **separate account** for admin (e.g. `admin@…`), not your personal or test account. Admins are sent to `/admin` after login, and `/dashboard`, `/editor`, and `/order` redirect them there, so an admin account never gets an invitation of its own.
+- Every admin action goes through a server function (`src/server/admin/`) that checks the session and `admin_users` first. Non-admins and signed-out visitors get the normal 404 page.
+- **Mark as paid** records a Rp0 `manual` payment and runs `mark_invitation_paid` (the same path as the DOKU webhook). It does not publish; the owner still presses **Terbitkan**. A reason is required and written to the activity log.
+- **Create for client** (Invitations page) sets up an invitation for a client who asked you to, or a free/promo one:
+  - If the email has no account yet, it is created right away with the password you set (or **Generate**), with the email marked confirmed. **No email is sent**; share the login with the client privately. An existing account is reused and keeps its password, unless it already has an invitation or is an admin.
+  - Creates a draft invitation (slug from the couple's names), optionally marks it paid, and logs both steps (never the password). The client fills it in and presses **Terbitkan**.
+- **Change template** (row menu ⋯) switches a client's invitation to another template. Only the look changes; names, events, photos, and texts stay, and a published invitation switches right away. Logged as `change_template` (from/to). Customers can't change the template in the editor; they pick it from the catalog before paying.
+- **Set password** (row menu ⋯ on Invitations) sets a new password for the invitation's owner directly, for a client who can't use the reset email. It must meet the strong-password rules (there is a **Generate** button). The old password stops working immediately; the new one is never written to the activity log, only that it was changed. Admin accounts are refused. Share the password with the client privately and ask them to change it in **Settings**.
+- Requires `SUPABASE_SERVICE_ROLE_KEY` on the server.
 
 ## Payments (DOKU Checkout)
 

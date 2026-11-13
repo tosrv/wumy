@@ -45,7 +45,7 @@ import {
 } from "@/components/editor/sections/EditorStepHeader";
 import { EditorAccordion } from "@/components/editor/sections/EditorAccordion";
 import { editorSectionDomId, stepStates, stepSummary } from "@/components/editor/step-states";
-import { EditorPreviewPane, EditorThemeStep } from "@/components/editor/sections/EditorPreviewPane";
+import { EditorPreviewPane } from "@/components/editor/sections/EditorPreviewPane";
 import { PartnersStep } from "@/components/editor/steps/PartnersStep";
 import { EventsStep } from "@/components/editor/steps/EventsStep";
 import { GalleryStep } from "@/components/editor/steps/GalleryStep";
@@ -498,15 +498,6 @@ export function EditorPage({ userId, invitation }: EditorPageProps) {
                 summaries={summaries}
                 renderSection={(stepId) => (
                   <>
-                    {stepId === "template" && (
-                      <EditorThemeStep
-                        templateId={templateId}
-                        onSelect={(id) => setValue("templateId", id, { shouldDirty: true })}
-                        partnerAName={partnerAName}
-                        partnerBName={partnerBName}
-                      />
-                    )}
-
                     {stepId === "partners" && (
                       <PartnersStep
                         invitationId={invitation.id}

@@ -10,12 +10,14 @@ import {
   LayoutDashboard,
   LogOut,
   Mail,
+  Menu,
   MoreHorizontal,
   Settings,
   Users,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth";
+import { getDisplayName } from "@/lib/display-name";
 import { daysUntilWedding, listMyInvitations, type InvitationRow } from "@/lib/invitations";
 import { useAppBreakpoint } from "@/hooks/use-app-breakpoint";
 import { cn } from "@/lib/utils";
@@ -44,6 +46,7 @@ import {
   SidebarProvider,
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 
 const primaryNav: {
   label: string;
@@ -96,10 +99,7 @@ function isActivePath(pathname: string, to: string) {
 
 function useUserDisplay() {
   const { user } = useAuth();
-  const displayName =
-    (user?.user_metadata?.["full_name"] as string | undefined)?.trim() ||
-    user?.email?.split("@")[0] ||
-    "Account";
+  const displayName = getDisplayName(user, "Account");
   const email = user?.email ?? "";
   const initials = displayName
     .split(/\s+/)
@@ -206,7 +206,8 @@ function SidebarNavUser() {
   );
 }
 
-function DesktopShell({ children }: { children: ReactNode }) {
+/** Sidebar panel shared by the desktop layout and the tablet drawer. */
+function DashboardSidebar({ className }: { className?: string }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { user, configured } = useAuth();
   const [activeInvitation, setActiveInvitation] = useState<InvitationRow | null>(null);
@@ -232,78 +233,81 @@ function DesktopShell({ children }: { children: ReactNode }) {
   const daysLeft = daysUntilWedding(activeInvitation?.wedding_date ?? null);
 
   return (
-    <SidebarProvider defaultOpen className="h-svh overflow-hidden">
-      <Sidebar collapsible="none" className="h-svh border-r border-sidebar-border">
-        <SidebarHeader className="gap-3 px-3 py-4">
-          <SidebarMenu>
-            <SidebarMenuItem>
-              <SidebarMenuButton size="lg" asChild className="h-auto py-2">
-                <Link to="/dashboard">
-                  <div className="grid min-w-0 flex-1 text-left leading-tight">
-                    <span className="font-display text-lg font-bold tracking-tight">WUMY</span>
-                    <span className="text-[11px] font-medium text-muted-foreground">
-                      Wedding Space
-                    </span>
-                  </div>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          </SidebarMenu>
+    <Sidebar collapsible="none" className={cn("h-svh border-r border-sidebar-border", className)}>
+      <SidebarHeader className="gap-3 px-3 py-4">
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton size="lg" asChild className="h-auto py-2">
+              <Link to="/dashboard">
+                <div className="grid min-w-0 flex-1 text-left leading-tight">
+                  <span className="font-display text-lg font-bold tracking-tight">WUMY</span>
+                  <span className="text-[11px] font-medium text-muted-foreground">
+                    Wedding Space
+                  </span>
+                </div>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
 
-          {activeInvitation && (
-            <div className="flex items-center justify-between gap-2 rounded-lg bg-secondary/60 px-2.5 py-2">
-              <div className="flex min-w-0 items-center gap-1.5">
-                <Heart className="size-3.5 shrink-0 text-muted-foreground" />
-                <span className="truncate text-xs font-semibold text-foreground">
-                  {coupleLabel}
-                </span>
-              </div>
-              {daysLeft != null && daysLeft >= 0 && (
-                <span className="shrink-0 rounded-full bg-secondary px-1.5 py-0.5 text-[11px] font-bold text-muted-foreground">
-                  {daysLeft}d left
-                </span>
-              )}
+        {activeInvitation && (
+          <div className="flex items-center justify-between gap-2 rounded-lg bg-secondary/60 px-2.5 py-2">
+            <div className="flex min-w-0 items-center gap-1.5">
+              <Heart className="size-3.5 shrink-0 text-muted-foreground" />
+              <span className="truncate text-xs font-semibold text-foreground">{coupleLabel}</span>
             </div>
-          )}
-        </SidebarHeader>
+            {daysLeft != null && daysLeft >= 0 && (
+              <span className="shrink-0 rounded-full bg-secondary px-1.5 py-0.5 text-[11px] font-bold text-muted-foreground">
+                {daysLeft}d left
+              </span>
+            )}
+          </div>
+        )}
+      </SidebarHeader>
 
-        <SidebarContent>
-          <SidebarGroup>
-            <SidebarGroupLabel>Management</SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {primaryNav.map((item) => {
-                  const active = isActivePath(pathname, item.to);
-                  return (
-                    <SidebarMenuItem key={item.to}>
-                      <SidebarMenuButton
-                        asChild
-                        isActive={active}
-                        className={cn("rounded-lg", active && "bg-secondary font-semibold")}
-                      >
-                        <Link to={item.to}>
-                          <item.icon />
-                          <span>{item.label}</span>
-                          {active ? (
-                            <span className="ml-auto size-1.5 rounded-full bg-accent" />
-                          ) : item.externalHint ? (
-                            <ExternalLink className="ml-auto size-3.5 opacity-50" />
-                          ) : null}
-                        </Link>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  );
-                })}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        </SidebarContent>
+      <SidebarContent>
+        <SidebarGroup>
+          <SidebarGroupLabel>Management</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {primaryNav.map((item) => {
+                const active = isActivePath(pathname, item.to);
+                return (
+                  <SidebarMenuItem key={item.to}>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={active}
+                      className={cn("rounded-lg", active && "bg-secondary font-semibold")}
+                    >
+                      <Link to={item.to}>
+                        <item.icon />
+                        <span>{item.label}</span>
+                        {active ? (
+                          <span className="ml-auto size-1.5 rounded-full bg-accent" />
+                        ) : item.externalHint ? (
+                          <ExternalLink className="ml-auto size-3.5 opacity-50" />
+                        ) : null}
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
+              })}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+      </SidebarContent>
 
-        <SidebarFooter>
-          <SidebarNavUser />
-        </SidebarFooter>
-      </Sidebar>
+      <SidebarFooter>
+        <SidebarNavUser />
+      </SidebarFooter>
+    </Sidebar>
+  );
+}
 
+function DesktopShell({ children }: { children: ReactNode }) {
+  return (
+    <SidebarProvider defaultOpen className="h-svh overflow-hidden">
+      <DashboardSidebar />
       <SidebarInset className="min-h-0 overflow-auto bg-background">
         <div className="flex-1">{children}</div>
       </SidebarInset>
@@ -311,57 +315,37 @@ function DesktopShell({ children }: { children: ReactNode }) {
   );
 }
 
+/** Tablet: the desktop sidebar in a drawer from the left, opened with the menu button. */
 function TabletShell({ children, title }: { children: ReactNode; title?: string }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const { displayName, initials } = useUserDisplay();
+  const [open, setOpen] = useState(false);
+
+  // Close the drawer after navigating.
+  useEffect(() => {
+    setOpen(false);
+  }, [pathname]);
 
   return (
-    <div className="flex min-h-screen flex-col bg-background">
-      <header className="sticky top-0 z-20 border-b border-border bg-background">
-        <div className="flex h-14 items-center justify-between gap-3 px-4">
-          <Link to="/dashboard" className="font-display text-lg font-bold tracking-tight">
-            WUMY
-          </Link>
-          <nav className="flex items-center gap-1">
-            {primaryNav.map((item) => {
-              const active = isActivePath(pathname, item.to);
-              return (
-                <Link
-                  key={item.to}
-                  to={item.to}
-                  className={cn(
-                    "inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm font-medium transition-colors",
-                    active
-                      ? "bg-secondary text-foreground"
-                      : "text-muted-foreground hover:bg-secondary/70 hover:text-foreground",
-                  )}
-                >
-                  <item.icon className="size-4" />
-                  <span className="hidden sm:inline">{item.shortLabel}</span>
-                </Link>
-              );
-            })}
-          </nav>
-          <AccountMenu
-            side="bottom"
-            trigger={
-              <Button variant="ghost" size="icon" className="rounded-lg">
-                <Avatar className="h-8 w-8 rounded-lg">
-                  <AvatarFallback className="rounded-lg text-xs font-bold">
-                    {initials || "U"}
-                  </AvatarFallback>
-                </Avatar>
-                <span className="sr-only">{displayName}</span>
-              </Button>
-            }
-          />
-        </div>
-        {title && (
-          <p className="border-t border-border px-4 py-2 text-sm text-muted-foreground">{title}</p>
-        )}
+    <SidebarProvider defaultOpen className="flex min-h-screen flex-col bg-background">
+      <header className="sticky top-0 z-20 flex h-14 items-center gap-3 border-b border-border bg-background px-4">
+        <Sheet open={open} onOpenChange={setOpen}>
+          <SheetTrigger asChild>
+            <Button variant="ghost" size="icon" className="rounded-lg" aria-label="Open menu">
+              <Menu className="size-5" />
+            </Button>
+          </SheetTrigger>
+          <SheetContent side="left" className="w-72 p-0 sm:max-w-72 [&>button]:hidden">
+            <SheetTitle className="sr-only">Menu</SheetTitle>
+            <DashboardSidebar className="h-full w-full border-r-0" />
+          </SheetContent>
+        </Sheet>
+        <Link to="/dashboard" className="font-display text-lg font-bold tracking-tight">
+          WUMY
+        </Link>
+        {title && <p className="ml-auto truncate text-sm text-muted-foreground">{title}</p>}
       </header>
-      <div className="flex-1">{children}</div>
-    </div>
+      <div className="w-full flex-1">{children}</div>
+    </SidebarProvider>
   );
 }
 

@@ -1,0 +1,924 @@
+import { useCallback, useEffect, useState, type ReactNode } from "react";
+import { Outlet } from "@tanstack/react-router";
+import { useAuth } from "@/lib/auth";
+import {
+  checkIsAdmin,
+  changeInvitationTemplateAsAdmin,
+  createInvitationForClient,
+  generateStrongPassword,
+  setClientPasswordAsAdmin,
+  fetchAdminAuditLog,
+  fetchAdminInvitations,
+  fetchAdminPayments,
+  markInvitationPaidAsAdmin,
+} from "@/lib/admin";
+import type { PaymentStatus } from "@/lib/supabase/database.types";
+import type { AdminAuditEntry, AdminInvitation, AdminPayment } from "@/server/admin/service";
+import { NotFoundPage } from "@/components/NotFoundPage";
+import { AdminShell } from "@/components/admin/AdminShell";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
+import { getTemplateById, invitationTemplates } from "@/data/templates";
+import { PasswordInput } from "@/components/ui/password-input";
+import { PasswordRequirements } from "@/components/ui/password-requirements";
+import { isStrongPassword } from "@/lib/password";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { KeyRound, MoreHorizontal, BadgeCheck, Palette } from "lucide-react";
+import { fieldClass, selectFieldClass, textareaFieldClass } from "@/components/ui/field-styles";
+import { cn } from "@/lib/utils";
+
+const dateFormat = new Intl.DateTimeFormat("en-GB", {
+  day: "numeric",
+  month: "short",
+  year: "numeric",
+  hour: "2-digit",
+  minute: "2-digit",
+});
+
+function formatDate(iso: string | null): string {
+  return iso ? dateFormat.format(new Date(iso)) : "—";
+}
+
+const rupiah = new Intl.NumberFormat("id-ID", {
+  style: "currency",
+  currency: "IDR",
+  maximumFractionDigits: 0,
+});
+
+function StatusBadge({ status }: { status: string }) {
+  const variant =
+    status === "paid" || status === "published"
+      ? "default"
+      : status === "failed" || status === "refunded"
+        ? "destructive"
+        : "secondary";
+  return <Badge variant={variant}>{status}</Badge>;
+}
+
+/** Simple page state for a paginated list. */
+function usePagedList<T>(load: (page: number) => Promise<{ rows: T[]; hasMore: boolean }>) {
+  const [page, setPage] = useState(0);
+  const [rows, setRows] = useState<T[]>([]);
+  const [hasMore, setHasMore] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const reload = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const result = await load(page);
+      setRows(result.rows);
+      setHasMore(result.hasMore);
+    } catch (err) {
+      console.error(err);
+      setError("Failed to load. Try again.");
+    } finally {
+      setLoading(false);
+    }
+  }, [load, page]);
+
+  useEffect(() => {
+    void reload();
+  }, [reload]);
+
+  return { page, setPage, rows, hasMore, loading, error, reload };
+}
+
+function Pager({
+  page,
+  hasMore,
+  onChange,
+}: {
+  page: number;
+  hasMore: boolean;
+  onChange: (page: number) => void;
+}) {
+  return (
+    <div className="mt-4 flex items-center justify-end gap-2 text-sm">
+      <Button variant="outline" size="sm" disabled={page === 0} onClick={() => onChange(page - 1)}>
+        Previous
+      </Button>
+      <span className="text-muted-foreground">Page {page + 1}</span>
+      <Button variant="outline" size="sm" disabled={!hasMore} onClick={() => onChange(page + 1)}>
+        Next
+      </Button>
+    </div>
+  );
+}
+
+function ListState({
+  loading,
+  error,
+  empty,
+  children,
+}: {
+  loading: boolean;
+  error: string | null;
+  empty: boolean;
+  children: ReactNode;
+}) {
+  if (error) return <p className="py-8 text-center text-sm text-destructive">{error}</p>;
+  if (loading) return <p className="py-8 text-center text-sm text-muted-foreground">Loading…</p>;
+  if (empty) return <p className="py-8 text-center text-sm text-muted-foreground">Nothing here.</p>;
+  return <>{children}</>;
+}
+
+function MarkPaidDialog({
+  invitation,
+  onClose,
+  onDone,
+}: {
+  invitation: AdminInvitation | null;
+  onClose: () => void;
+  onDone: (message: string) => void;
+}) {
+  const [note, setNote] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setNote("");
+    setError(null);
+  }, [invitation]);
+
+  async function submit() {
+    if (!invitation) return;
+    if (note.trim().length < 3) {
+      setError("Add a short reason (at least 3 characters).");
+      return;
+    }
+    setBusy(true);
+    setError(null);
+    try {
+      const result = await markInvitationPaidAsAdmin(invitation.id, note.trim());
+      onDone(
+        result.alreadyPaid
+          ? `/${invitation.slug} was already paid.`
+          : `/${invitation.slug} marked as paid.`,
+      );
+    } catch (err) {
+      console.error(err);
+      setError("Failed to mark as paid. Try again.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <Dialog open={invitation !== null} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Mark /{invitation?.slug} as paid?</DialogTitle>
+          <DialogDescription>
+            Records a Rp0 manual payment and unlocks publishing. The owner still presses Publish in
+            the editor. This is written to the activity log.
+          </DialogDescription>
+        </DialogHeader>
+        <Textarea
+          className={textareaFieldClass}
+          value={note}
+          onChange={(e) => setNote(e.target.value)}
+          placeholder="Reason, e.g. free invitation for a friend, DOKU webhook missed (INV-…)"
+          maxLength={500}
+        />
+        {error && <p className="text-sm text-destructive">{error}</p>}
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose} disabled={busy}>
+            Cancel
+          </Button>
+          <Button onClick={() => void submit()} disabled={busy}>
+            {busy ? "Saving…" : "Mark as paid"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function PageHeader({ title, description }: { title: string; description: string }) {
+  return (
+    <div className="mb-6 flex flex-col gap-1">
+      <h1 className="font-display text-3xl font-bold tracking-tight text-foreground md:text-4xl">
+        {title}
+      </h1>
+      <p className="text-sm text-muted-foreground">{description}</p>
+    </div>
+  );
+}
+
+function PageBody({ children }: { children: ReactNode }) {
+  return (
+    <main className="flex w-full flex-1 flex-col px-4 py-6 pb-16 md:px-8 md:py-8">{children}</main>
+  );
+}
+
+function ChangeTemplateDialog({
+  invitation,
+  onClose,
+  onDone,
+}: {
+  invitation: AdminInvitation | null;
+  onClose: () => void;
+  onDone: (message: string) => void;
+}) {
+  const [templateId, setTemplateId] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setTemplateId(invitation?.templateId ?? "");
+    setError(null);
+  }, [invitation]);
+
+  async function submit() {
+    if (!invitation) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const result = await changeInvitationTemplateAsAdmin(invitation.id, templateId);
+      if ("error" in result) {
+        setError(result.error);
+        return;
+      }
+      const name = getTemplateById(templateId)?.name ?? templateId;
+      onDone(
+        result.changed
+          ? `/${invitation.slug} now uses the ${name} template.`
+          : `/${invitation.slug} already uses ${name}.`,
+      );
+    } catch (err) {
+      console.error(err);
+      setError("Failed to change the template. Try again.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <Dialog open={invitation !== null} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Change template for /{invitation?.slug}</DialogTitle>
+          <DialogDescription>
+            Only the look changes; names, events, photos, and texts stay. A published invitation
+            switches right away.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="grid gap-1.5">
+          <Label htmlFor="ct-template">Template</Label>
+          <select
+            id="ct-template"
+            value={templateId}
+            onChange={(e) => setTemplateId(e.target.value)}
+            className={selectFieldClass}
+          >
+            {invitationTemplates.map((tpl) => (
+              <option key={tpl.id} value={tpl.id}>
+                {tpl.name}
+                {tpl.id === invitation?.templateId ? " (current)" : ""}
+              </option>
+            ))}
+          </select>
+          {templateId && (
+            <a
+              href={`/demo/${templateId}`}
+              target="_blank"
+              rel="noreferrer"
+              className="text-sm text-muted-foreground underline underline-offset-2"
+            >
+              Preview this template
+            </a>
+          )}
+        </div>
+        {error && <p className="text-sm text-destructive">{error}</p>}
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose} disabled={busy}>
+            Cancel
+          </Button>
+          <Button
+            onClick={() => void submit()}
+            disabled={busy || !templateId || templateId === invitation?.templateId}
+          >
+            {busy ? "Saving…" : "Change template"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function SetPasswordDialog({
+  invitation,
+  onClose,
+  onDone,
+}: {
+  invitation: AdminInvitation | null;
+  onClose: () => void;
+  onDone: (message: string) => void;
+}) {
+  const [password, setPassword] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setPassword("");
+    setError(null);
+  }, [invitation]);
+
+  async function submit() {
+    if (!invitation) return;
+    if (!isStrongPassword(password)) {
+      setError("Meet all the password requirements first.");
+      return;
+    }
+    setBusy(true);
+    setError(null);
+    try {
+      const result = await setClientPasswordAsAdmin(invitation.id, password);
+      if ("error" in result) {
+        setError(result.error);
+        return;
+      }
+      onDone(
+        `Password changed for ${result.email ?? invitation.ownerEmail ?? `/${invitation.slug}`}. ` +
+          "Share it with the client privately and ask them to change it in Settings.",
+      );
+    } catch (err) {
+      console.error(err);
+      setError("Failed to change the password. Try again.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <Dialog open={invitation !== null} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Set a new password</DialogTitle>
+          <DialogDescription>
+            For {invitation?.ownerEmail ?? "the client"} (/{invitation?.slug}). Their old password
+            stops working right away. The new password is not stored in the activity log.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="grid gap-2">
+          <div className="flex gap-2">
+            <div className="flex-1">
+              <PasswordInput
+                className={fieldClass}
+                styled
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="New password"
+                autoComplete="new-password"
+              />
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setPassword(generateStrongPassword())}
+            >
+              Generate
+            </Button>
+          </div>
+          <PasswordRequirements password={password} lang="en" />
+        </div>
+        {error && <p className="text-sm text-destructive">{error}</p>}
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose} disabled={busy}>
+            Cancel
+          </Button>
+          <Button onClick={() => void submit()} disabled={busy || !isStrongPassword(password)}>
+            {busy ? "Saving…" : "Set password"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function CreateForClientDialog({
+  open,
+  onClose,
+  onDone,
+}: {
+  open: boolean;
+  onClose: () => void;
+  onDone: (message: string) => void;
+}) {
+  const [email, setEmail] = useState("");
+  const [partnerA, setPartnerA] = useState("");
+  const [partnerB, setPartnerB] = useState("");
+  const [templateId, setTemplateId] = useState(invitationTemplates[0]?.id ?? "");
+  const [markPaid, setMarkPaid] = useState(true);
+  const [note, setNote] = useState("");
+  const [password, setPassword] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    setEmail("");
+    setPartnerA("");
+    setPartnerB("");
+    setTemplateId(invitationTemplates[0]?.id ?? "");
+    setMarkPaid(true);
+    setNote("");
+    setPassword("");
+    setError(null);
+  }, [open]);
+
+  async function submit() {
+    if (!email.trim() || !partnerA.trim() || !partnerB.trim()) {
+      setError("Email and both names are required.");
+      return;
+    }
+    if (note.trim().length < 3) {
+      setError("Add a short reason (at least 3 characters).");
+      return;
+    }
+    if (!isStrongPassword(password)) {
+      setError("Set a password that meets all the requirements.");
+      return;
+    }
+    setBusy(true);
+    setError(null);
+    try {
+      const result = await createInvitationForClient({
+        password,
+        email: email.trim(),
+        partnerA: partnerA.trim(),
+        partnerB: partnerB.trim(),
+        templateId,
+        markPaid,
+        note: note.trim(),
+      });
+      if ("error" in result) {
+        setError(result.error);
+        return;
+      }
+      onDone(
+        `Created /${result.slug}${result.paid ? " (paid)" : ""}. ` +
+          (result.accountCreated
+            ? `Account ${email.trim()} was created with the password you set. Share the login with the client privately.`
+            : `${email.trim()} already had an account; it keeps its current password.`),
+      );
+    } catch (err) {
+      console.error(err);
+      setError("Failed to create the invitation. Check the email and try again.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={(next) => !next && onClose()}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Create invitation for a client</DialogTitle>
+          <DialogDescription>
+            Creates the client&apos;s account with the password below (no email is sent) and a draft
+            invitation. Share the login with the client; they fill in and publish the invitation. If
+            the email already has an account, it is reused and keeps its password.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="grid gap-3">
+          <div className="grid gap-1.5">
+            <Label htmlFor="cfc-email">Client email</Label>
+            <Input
+              className={fieldClass}
+              id="cfc-email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="client@example.com"
+            />
+          </div>
+          <div className="grid gap-1.5">
+            <Label htmlFor="cfc-password">Password for the client</Label>
+            <div className="flex gap-2">
+              <div className="flex-1">
+                <PasswordInput
+                  className={fieldClass}
+                  id="cfc-password"
+                  styled
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  autoComplete="new-password"
+                />
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setPassword(generateStrongPassword())}
+              >
+                Generate
+              </Button>
+            </div>
+            <PasswordRequirements password={password} lang="en" />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="grid gap-1.5">
+              <Label htmlFor="cfc-a">Partner 1</Label>
+              <Input
+                className={fieldClass}
+                id="cfc-a"
+                value={partnerA}
+                onChange={(e) => setPartnerA(e.target.value)}
+              />
+            </div>
+            <div className="grid gap-1.5">
+              <Label htmlFor="cfc-b">Partner 2</Label>
+              <Input
+                className={fieldClass}
+                id="cfc-b"
+                value={partnerB}
+                onChange={(e) => setPartnerB(e.target.value)}
+              />
+            </div>
+          </div>
+          <div className="grid gap-1.5">
+            <Label htmlFor="cfc-template">Template</Label>
+            <select
+              id="cfc-template"
+              value={templateId}
+              onChange={(e) => setTemplateId(e.target.value)}
+              className={selectFieldClass}
+            >
+              {invitationTemplates.map((tpl) => (
+                <option key={tpl.id} value={tpl.id}>
+                  {tpl.name}
+                </option>
+              ))}
+            </select>
+          </div>
+          <label className="flex items-center gap-2 text-sm">
+            <Checkbox checked={markPaid} onCheckedChange={(v) => setMarkPaid(v === true)} />
+            Mark as paid (Rp0 manual payment)
+          </label>
+          <div className="grid gap-1.5">
+            <Label htmlFor="cfc-note">Reason</Label>
+            <Textarea
+              className={textareaFieldClass}
+              id="cfc-note"
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              placeholder="e.g. free invitation for a friend, promo, client asked us to set it up"
+              maxLength={500}
+            />
+          </div>
+        </div>
+        {error && <p className="text-sm text-destructive">{error}</p>}
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose} disabled={busy}>
+            Cancel
+          </Button>
+          <Button onClick={() => void submit()} disabled={busy}>
+            {busy ? "Creating…" : "Create invitation"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+export function AdminInvitationsPage() {
+  const [notice, setNotice] = useState<string | null>(null);
+  const [creating, setCreating] = useState(false);
+  const [passwordTarget, setPasswordTarget] = useState<AdminInvitation | null>(null);
+  const [templateTarget, setTemplateTarget] = useState<AdminInvitation | null>(null);
+  const [searchInput, setSearchInput] = useState("");
+  const [search, setSearch] = useState("");
+  const [target, setTarget] = useState<AdminInvitation | null>(null);
+  const load = useCallback((page: number) => fetchAdminInvitations(page, search), [search]);
+  const list = usePagedList(load);
+
+  return (
+    <PageBody>
+      <PageHeader
+        title="Invitations"
+        description="Every invitation, newest first. Mark one as paid for a free invitation or a missed DOKU webhook."
+      />
+      {notice && (
+        <div className="mb-4 flex items-center justify-between rounded-md border bg-secondary px-4 py-2 text-sm">
+          <span>{notice}</span>
+          <button type="button" className="text-muted-foreground" onClick={() => setNotice(null)}>
+            Dismiss
+          </button>
+        </div>
+      )}
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+        <form
+          className="flex gap-2"
+          onSubmit={(e) => {
+            e.preventDefault();
+            list.setPage(0);
+            setSearch(searchInput.trim());
+          }}
+        >
+          <Input
+            className={cn(fieldClass, "max-w-xs")}
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            placeholder="Search by slug"
+          />
+          <Button type="submit" variant="outline">
+            Search
+          </Button>
+        </form>
+        <Button onClick={() => setCreating(true)}>Create for client</Button>
+      </div>
+      <ListState loading={list.loading} error={list.error} empty={list.rows.length === 0}>
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Slug</TableHead>
+                <TableHead>Couple</TableHead>
+                <TableHead>Owner</TableHead>
+                <TableHead>Template</TableHead>
+                <TableHead>Payment</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Created</TableHead>
+                <TableHead />
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {list.rows.map((inv) => (
+                <TableRow key={inv.id}>
+                  <TableCell className="whitespace-nowrap font-medium">
+                    {inv.status === "published" ? (
+                      <a
+                        href={`/${inv.slug}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="underline"
+                      >
+                        /{inv.slug}
+                      </a>
+                    ) : (
+                      `/${inv.slug}`
+                    )}
+                  </TableCell>
+                  <TableCell className="whitespace-nowrap">
+                    {[inv.partnerA, inv.partnerB].filter(Boolean).join(" & ") || "—"}
+                  </TableCell>
+                  <TableCell className="text-muted-foreground">{inv.ownerEmail ?? "—"}</TableCell>
+                  <TableCell className="whitespace-nowrap">
+                    {getTemplateById(inv.templateId)?.name ?? inv.templateId}
+                  </TableCell>
+                  <TableCell>
+                    <StatusBadge status={inv.paymentStatus} />
+                  </TableCell>
+                  <TableCell>
+                    <StatusBadge status={inv.status} />
+                  </TableCell>
+                  <TableCell className="whitespace-nowrap text-muted-foreground">
+                    {formatDate(inv.createdAt)}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button size="icon" variant="ghost" aria-label={`Actions for /${inv.slug}`}>
+                          <MoreHorizontal className="size-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        {inv.paymentStatus !== "paid" && (
+                          <DropdownMenuItem onClick={() => setTarget(inv)}>
+                            <BadgeCheck />
+                            Mark as paid
+                          </DropdownMenuItem>
+                        )}
+                        <DropdownMenuItem onClick={() => setTemplateTarget(inv)}>
+                          <Palette />
+                          Change template
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => setPasswordTarget(inv)}>
+                          <KeyRound />
+                          Set password
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      </ListState>
+      <Pager page={list.page} hasMore={list.hasMore} onChange={list.setPage} />
+      <ChangeTemplateDialog
+        invitation={templateTarget}
+        onClose={() => setTemplateTarget(null)}
+        onDone={(message) => {
+          setTemplateTarget(null);
+          setNotice(message);
+          void list.reload();
+        }}
+      />
+      <SetPasswordDialog
+        invitation={passwordTarget}
+        onClose={() => setPasswordTarget(null)}
+        onDone={(message) => {
+          setPasswordTarget(null);
+          setNotice(message);
+        }}
+      />
+      <CreateForClientDialog
+        open={creating}
+        onClose={() => setCreating(false)}
+        onDone={(message) => {
+          setCreating(false);
+          setNotice(message);
+          void list.reload();
+        }}
+      />
+      <MarkPaidDialog
+        invitation={target}
+        onClose={() => setTarget(null)}
+        onDone={(message) => {
+          setTarget(null);
+          setNotice(message);
+          void list.reload();
+        }}
+      />
+    </PageBody>
+  );
+}
+
+const PAYMENT_FILTERS: (PaymentStatus | "all")[] = ["all", "pending", "paid", "failed", "refunded"];
+
+export function AdminPaymentsPage() {
+  const [status, setStatus] = useState<PaymentStatus | "all">("all");
+  const load = useCallback(
+    (page: number) => fetchAdminPayments(page, status === "all" ? undefined : status),
+    [status],
+  );
+  const list = usePagedList(load);
+
+  return (
+    <PageBody>
+      <PageHeader title="Payments" description="All payments, including DOKU and manual ones." />
+      <div className="mb-4 flex flex-wrap gap-2">
+        {PAYMENT_FILTERS.map((value) => (
+          <Button
+            key={value}
+            size="sm"
+            variant={status === value ? "default" : "outline"}
+            onClick={() => {
+              list.setPage(0);
+              setStatus(value);
+            }}
+          >
+            {value}
+          </Button>
+        ))}
+      </div>
+      <ListState loading={list.loading} error={list.error} empty={list.rows.length === 0}>
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Invitation</TableHead>
+                <TableHead>Amount</TableHead>
+                <TableHead>Provider</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Invoice</TableHead>
+                <TableHead>Created</TableHead>
+                <TableHead>Paid</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {list.rows.map((p: AdminPayment) => (
+                <TableRow key={p.id}>
+                  <TableCell className="whitespace-nowrap font-medium">
+                    {p.invitationSlug ? `/${p.invitationSlug}` : "—"}
+                  </TableCell>
+                  <TableCell>{rupiah.format(p.amountIdr)}</TableCell>
+                  <TableCell>{p.provider}</TableCell>
+                  <TableCell>
+                    <StatusBadge status={p.status} />
+                  </TableCell>
+                  <TableCell className="whitespace-nowrap font-mono text-xs">
+                    {p.invoiceNumber ?? "—"}
+                  </TableCell>
+                  <TableCell className="whitespace-nowrap text-muted-foreground">
+                    {formatDate(p.createdAt)}
+                  </TableCell>
+                  <TableCell className="whitespace-nowrap text-muted-foreground">
+                    {formatDate(p.paidAt)}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      </ListState>
+      <Pager page={list.page} hasMore={list.hasMore} onChange={list.setPage} />
+    </PageBody>
+  );
+}
+
+export function AdminActivityPage() {
+  const load = useCallback((page: number) => fetchAdminAuditLog(page), []);
+  const list = usePagedList(load);
+
+  return (
+    <PageBody>
+      <PageHeader title="Activity" description="Every action taken by an admin." />
+      <ListState loading={list.loading} error={list.error} empty={list.rows.length === 0}>
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>When</TableHead>
+                <TableHead>Admin</TableHead>
+                <TableHead>Action</TableHead>
+                <TableHead>Details</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {list.rows.map((entry: AdminAuditEntry) => (
+                <TableRow key={entry.id}>
+                  <TableCell className="whitespace-nowrap text-muted-foreground">
+                    {formatDate(entry.createdAt)}
+                  </TableCell>
+                  <TableCell>{entry.adminEmail ?? "—"}</TableCell>
+                  <TableCell>
+                    <Badge variant="secondary">{entry.action}</Badge>
+                  </TableCell>
+                  <TableCell className="max-w-md break-all font-mono text-xs">
+                    {entry.details}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      </ListState>
+      <Pager page={list.page} hasMore={list.hasMore} onChange={list.setPage} />
+    </PageBody>
+  );
+}
+
+/** /admin layout: only admins get the shell; everyone else sees the normal 404. */
+export function AdminLayout() {
+  const { user, loading } = useAuth();
+  const [access, setAccess] = useState<"checking" | "admin" | "denied">("checking");
+
+  useEffect(() => {
+    if (loading) return;
+    if (!user) {
+      setAccess("denied");
+      return;
+    }
+    let cancelled = false;
+    setAccess("checking");
+    checkIsAdmin()
+      .then((isAdmin) => {
+        if (!cancelled) setAccess(isAdmin ? "admin" : "denied");
+      })
+      .catch(() => {
+        if (!cancelled) setAccess("denied");
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [loading, user]);
+
+  if (access === "denied") return <NotFoundPage />;
+  if (access === "checking") return <div className="min-h-screen bg-background" />;
+
+  return (
+    <AdminShell>
+      <Outlet />
+    </AdminShell>
+  );
+}

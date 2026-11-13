@@ -2,6 +2,7 @@ import { useEffect, type ReactNode } from "react";
 import { Outlet, createFileRoute, useRouter, Link } from "@tanstack/react-router";
 import { DashboardShell } from "@/components/dashboard/DashboardShell";
 import { useAuth } from "@/lib/auth";
+import { useRedirectAdmins } from "@/hooks/use-admin-redirect";
 import { buildPageHead } from "@/lib/seo";
 
 export const Route = createFileRoute("/dashboard")({
@@ -18,6 +19,7 @@ export const Route = createFileRoute("/dashboard")({
 function DashboardLayout() {
   const { user, loading, configured } = useAuth();
   const router = useRouter();
+  useRedirectAdmins();
 
   useEffect(() => {
     if (loading) return;

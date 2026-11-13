@@ -4,6 +4,7 @@ import { OrderPage } from "@/components/order/OrderPage";
 import { ensureOrderInvitation } from "@/lib/order";
 import type { InvitationRow } from "@/lib/invitations";
 import { useAuth } from "@/lib/auth";
+import { useRedirectAdmins } from "@/hooks/use-admin-redirect";
 import { buildPageHead } from "@/lib/seo";
 import { track } from "@/lib/analytics";
 import { whatsappUrl } from "@/lib/contact";
@@ -40,6 +41,8 @@ function OrderRoute() {
   const [invitation, setInvitation] = useState<InvitationRow | null>(null);
   const [error, setError] = useState<string | null>(null);
   const tracked = useRef(false);
+  // Admin accounts never get an order invitation created; they are sent to /admin.
+  const adminCheck = useRedirectAdmins();
 
   useEffect(() => {
     if (tracked.current) return;
@@ -54,12 +57,18 @@ function OrderRoute() {
   }, [loading, configured, user, template, router]);
 
   useEffect(() => {
-    if (loading || !configured || !user) return;
+    if (loading || !configured || !user || adminCheck !== "customer") return;
     let cancelled = false;
     setError(null);
     ensureOrderInvitation(user.id, template)
-      .then(({ invitation: inv, redirectToEditor }) => {
+      .then((result) => {
         if (cancelled) return;
+        if (result.needsTemplate) {
+          // Nothing ordered yet and no template chosen: pick one from the catalog first.
+          void router.navigate({ to: "/product", replace: true });
+          return;
+        }
+        const { invitation: inv, redirectToEditor } = result;
         if (redirectToEditor) {
           void router.navigate({
             to: "/editor/$invitationId",
@@ -77,7 +86,7 @@ function OrderRoute() {
     return () => {
       cancelled = true;
     };
-  }, [loading, configured, user, template, router]);
+  }, [loading, configured, user, template, router, adminCheck]);
 
   if (!configured) {
     return (
@@ -130,12 +139,5 @@ function OrderRoute() {
     );
   }
 
-  return (
-    <OrderPage
-      invitation={invitation}
-      onTemplateChange={(id) =>
-        void router.navigate({ to: "/order", search: { template: id }, replace: true })
-      }
-    />
-  );
+  return <OrderPage invitation={invitation} />;
 }
