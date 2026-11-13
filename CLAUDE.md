@@ -24,7 +24,7 @@ Stack: TanStack Start (React, SSR, Vite, Nitro → Vercel), Supabase (Postgres, 
 | `npm run lint` | ESLint + Prettier |
 | `npx tsc --noEmit` | Type check |
 
-Before committing, run `npx tsc --noEmit`, `npm test`, and `npm run lint` (0 errors; `npm run format` fixes Prettier issues). CI (`.github/workflows/ci.yml`) runs the same three checks on every PR and push to `dev`/`main`.
+Before committing, run `npx tsc --noEmit`, `npm test`, and `npm run lint` (0 errors; `npm run format` fixes Prettier issues). CI (`.github/workflows/ci.yml`) runs the same three checks on every push to `dev` and every PR to `main`.
 
 ## Structure
 
@@ -53,19 +53,14 @@ Before committing, run `npx tsc --noEmit`, `npm test`, and `npm run lint` (0 err
 ## Branches and Git workflow
 
 - `main`: production. `dev`: staging (`dev.wumy.my.id`, dev Supabase, DOKU sandbox).
-- Work on a new branch off `dev`, named like `fix/...`, `feat/...`, `docs/...`, `chore/...`.
-- Use Conventional Commits, e.g. `fix(auth): ...`, `feat(staging): ...`.
-- Open PRs against `dev`; don't push directly to `dev` or `main`.
+- Commit directly on `dev` and push to `origin dev`; no feature branches or PRs into `dev`. Pull first (`git pull --rebase origin dev`) and run the checks above before every push.
+- Use Conventional Commits, e.g. `fix(auth): ...`, `feat(staging): ...`, `docs: ...`, `chore: ...`. One logical change per commit, since the commit history is the change log.
+- Release to production only through a PR from `dev` to `main`; never push directly to `main`.
 
-### After a PR is merged
-
-Always run these steps so local branches match GitHub:
+### After the `dev` → `main` PR is merged
 
 ```bash
 git checkout dev
 git pull origin dev
-git branch -d <merged-branch>
 git fetch --prune origin
 ```
-
-If GitHub didn't delete the remote branch automatically, delete it too: `git push origin --delete <branch>`.
