@@ -10,6 +10,8 @@ import { Label } from "@/components/ui/label";
 import { PasswordInput } from "@/components/ui/password-input";
 import { PasswordRequirements } from "@/components/ui/password-requirements";
 import { newPasswordIssue } from "@/lib/password";
+import { fieldClass } from "@/components/ui/field-styles";
+import { cn } from "@/lib/utils";
 
 export function SettingsPage() {
   const { user, configured } = useAuth();
@@ -128,7 +130,7 @@ export function SettingsPage() {
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
                 placeholder="Your name"
-                className="h-10 rounded-xl bg-secondary/70"
+                className={fieldClass}
               />
             </div>
             <div>
@@ -137,11 +139,7 @@ export function SettingsPage() {
               </Label>
               <div className="relative">
                 <Mail className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  value={email}
-                  readOnly
-                  className="h-10 rounded-xl bg-secondary/70 pl-9 text-muted-foreground"
-                />
+                <Input value={email} readOnly className={cn(fieldClass, "pl-9 text-text-muted")} />
               </div>
               <p className="mt-1.5 text-xs text-muted-foreground">
                 Email changes are handled via support for now.
@@ -181,7 +179,7 @@ export function SettingsPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Create a strong password"
-                className="h-10 rounded-xl bg-secondary/70"
+                className={fieldClass}
               />
               <PasswordRequirements password={password} lang="en" className="mt-2" />
             </div>
@@ -194,7 +192,7 @@ export function SettingsPage() {
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 placeholder="Repeat new password"
-                className="h-10 rounded-xl bg-secondary/70"
+                className={fieldClass}
               />
             </div>
           </div>

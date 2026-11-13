@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { fieldClass, selectFieldClass } from "@/components/ui/field-styles";
 
 const GROUPS = [
   "VIP",
@@ -105,7 +106,7 @@ export function GuestsAddDialog({ open, onOpenChange, onSave }: GuestsAddDialogP
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="e.g. Raditya Wicaksono"
-              className="rounded-xl bg-secondary/70"
+              className={fieldClass}
             />
           </div>
           <div>
@@ -115,7 +116,7 @@ export function GuestsAddDialog({ open, onOpenChange, onSave }: GuestsAddDialogP
             <select
               value={group}
               onChange={(e) => setGroup(e.target.value)}
-              className="h-9 w-full rounded-xl bg-secondary/70 px-3 text-sm focus:outline-none"
+              className={selectFieldClass}
             >
               {GROUPS.map((g) => (
                 <option key={g} value={g}>
@@ -135,7 +136,7 @@ export function GuestsAddDialog({ open, onOpenChange, onSave }: GuestsAddDialogP
                 max={5}
                 value={plusOnes}
                 onChange={(e) => setPlusOnes(e.target.value)}
-                className="rounded-xl bg-secondary/70"
+                className={fieldClass}
               />
             </div>
             <div>
@@ -146,7 +147,7 @@ export function GuestsAddDialog({ open, onOpenChange, onSave }: GuestsAddDialogP
                 value={table}
                 onChange={(e) => setTable(e.target.value)}
                 placeholder="e.g. Table 04"
-                className="rounded-xl bg-secondary/70"
+                className={fieldClass}
               />
             </div>
           </div>
@@ -159,7 +160,7 @@ export function GuestsAddDialog({ open, onOpenChange, onSave }: GuestsAddDialogP
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
               placeholder="+62 812..."
-              className="rounded-xl bg-secondary/70"
+              className={fieldClass}
             />
           </div>
           {error && <p className="text-sm text-destructive">{error}</p>}

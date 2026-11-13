@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PasswordInput } from "@/components/ui/password-input";
 import { PasswordRequirements } from "@/components/ui/password-requirements";
+import { fieldClass } from "@/components/ui/field-styles";
 
 /** The signed-in admin's own account: email and password change. */
 export function AdminSettingsPage() {
@@ -71,12 +72,7 @@ export function AdminSettingsPage() {
           >
             Email
           </Label>
-          <Input
-            id="admin-email"
-            value={user?.email ?? ""}
-            readOnly
-            className="h-10 rounded-xl bg-secondary/70"
-          />
+          <Input id="admin-email" value={user?.email ?? ""} readOnly className={fieldClass} />
           <p className="mt-2 text-xs text-muted-foreground">
             To change the admin email, update it in Supabase → Authentication → Users.
           </p>
@@ -101,7 +97,7 @@ export function AdminSettingsPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 autoComplete="new-password"
-                className="h-10 rounded-xl bg-secondary/70"
+                className={fieldClass}
               />
               <PasswordRequirements password={password} lang="en" className="mt-2" />
             </div>
@@ -118,7 +114,7 @@ export function AdminSettingsPage() {
                 value={confirm}
                 onChange={(e) => setConfirm(e.target.value)}
                 autoComplete="new-password"
-                className="h-10 rounded-xl bg-secondary/70"
+                className={fieldClass}
               />
             </div>
           </div>
