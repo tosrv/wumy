@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { Check, KeyRound, Mail, User } from "lucide-react";
 import { useAuth } from "@/lib/auth";
+import { getProfileName } from "@/lib/display-name";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,7 +25,7 @@ export function SettingsPage() {
 
   useEffect(() => {
     if (!user) return;
-    setFullName((user.user_metadata?.["full_name"] as string | undefined)?.trim() || "");
+    setFullName(getProfileName(user));
     setEmail(user.email ?? "");
   }, [user]);
 
@@ -42,10 +43,20 @@ export function SettingsPage() {
     }
     setSavingProfile(true);
     try {
-      const { error: updateError } = await supabase.auth.updateUser({
-        data: { full_name: fullName.trim() },
+      const name = fullName.trim();
+      // `display_name`, not `full_name`: Google overwrites `full_name` on every sign-in.
+      const { data, error: updateError } = await supabase.auth.updateUser({
+        data: { display_name: name },
       });
       if (updateError) throw updateError;
+      // Keep profiles.full_name (used e.g. as the payer name) in sync.
+      if (data.user) {
+        const { error: profileError } = await supabase
+          .from("profiles")
+          .update({ full_name: name || null })
+          .eq("id", data.user.id);
+        if (profileError) throw profileError;
+      }
       setProfileMessage("Profile saved.");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to save profile.");

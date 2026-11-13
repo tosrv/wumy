@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/lib/auth";
+import { getDisplayName } from "@/lib/display-name";
 import {
   countInvitationGuests,
   listInvitationRsvps,
@@ -65,7 +66,7 @@ export function OverviewPage() {
 
   const coupleLabel = invitation
     ? `${invitation.partner_a_name} & ${invitation.partner_b_name}`
-    : user?.user_metadata?.["full_name"] || user?.email?.split("@")[0] || "there";
+    : getDisplayName(user, "there");
 
   const attending = useMemo(
     () => rsvps.filter((r) => r.status === "coming").reduce((sum, r) => sum + r.party_size, 0),
