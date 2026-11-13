@@ -4,7 +4,11 @@ import { prefersReducedMotion, shouldLockScroll } from "./motion";
 export const OPEN_ANIMATION_MS = 900;
 
 /** Cover gate: locks page scroll until opened; `opening` is true during the open animation. */
-export function useOpenGate(opts: { startOpened?: boolean }): {
+export function useOpenGate(opts: {
+  startOpened?: boolean;
+  /** Open animation length; defaults to `OPEN_ANIMATION_MS`. */
+  durationMs?: number;
+}): {
   open: boolean;
   opening: boolean;
   openGate: () => void;
@@ -13,6 +17,7 @@ export function useOpenGate(opts: { startOpened?: boolean }): {
   /** True only after the guest opened the gate themselves (never via `startOpened`). */
   userOpened: boolean;
 } {
+  const durationMs = opts.durationMs ?? OPEN_ANIMATION_MS;
   const [open, setOpen] = useState(Boolean(opts.startOpened));
   const [opening, setOpening] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
@@ -45,8 +50,8 @@ export function useOpenGate(opts: { startOpened?: boolean }): {
     timer.current = setTimeout(() => {
       setOpening(false);
       setOpen(true);
-    }, OPEN_ANIMATION_MS);
-  }, [open, opening]);
+    }, durationMs);
+  }, [open, opening, durationMs]);
 
   return { open, opening, openGate, mainRef, userOpened };
 }

@@ -651,6 +651,48 @@
   color: oklch(0.16 0 0 / 0.28);
 }
 
+/* Shared invitation-template motion (src/templates/shared). Disabled under reduced motion below. */
+@keyframes wumy-drift {
+  to {
+    transform: translate(48px, 48px);
+  }
+}
+@keyframes wumy-glow {
+  0%,
+  100% {
+    filter: drop-shadow(0 0 2px rgb(240 200 110 / 0.3));
+  }
+  50% {
+    filter: drop-shadow(0 0 10px rgb(240 200 110 / 0.85));
+  }
+}
+@keyframes wumy-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+@keyframes wumy-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.animate-wumy-drift {
+  animation: wumy-drift 48s linear infinite;
+}
+.animate-wumy-glow {
+  animation: wumy-glow 3.6s ease-in-out infinite;
+}
+.animate-wumy-float {
+  animation: wumy-float 6s ease-in-out infinite;
+}
+.animate-wumy-spin {
+  animation: wumy-spin 80s linear infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
@@ -658,6 +700,10 @@
 
   .reveal,
   .animate-float,
+  .animate-wumy-drift,
+  .animate-wumy-glow,
+  .animate-wumy-float,
+  .animate-wumy-spin,
   .template-card,
   .hover-lift,
   .min-inv [class*="translate-y"] {
