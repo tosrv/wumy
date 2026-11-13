@@ -49,6 +49,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { KeyRound, MoreHorizontal, BadgeCheck, Palette } from "lucide-react";
+import { fieldClass, selectFieldClass, textareaFieldClass } from "@/components/ui/field-styles";
+import { cn } from "@/lib/utils";
 
 const dateFormat = new Intl.DateTimeFormat("en-GB", {
   day: "numeric",
@@ -199,6 +201,7 @@ function MarkPaidDialog({
           </DialogDescription>
         </DialogHeader>
         <Textarea
+          className={textareaFieldClass}
           value={note}
           onChange={(e) => setNote(e.target.value)}
           placeholder="Reason, e.g. free invitation for a friend, DOKU webhook missed (INV-…)"
@@ -293,7 +296,7 @@ function ChangeTemplateDialog({
             id="ct-template"
             value={templateId}
             onChange={(e) => setTemplateId(e.target.value)}
-            className="h-9 rounded-md border border-input bg-transparent px-3 text-sm shadow-sm"
+            className={selectFieldClass}
           >
             {invitationTemplates.map((tpl) => (
               <option key={tpl.id} value={tpl.id}>
@@ -388,6 +391,7 @@ function SetPasswordDialog({
           <div className="flex gap-2">
             <div className="flex-1">
               <PasswordInput
+                className={fieldClass}
                 styled
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
@@ -508,6 +512,7 @@ function CreateForClientDialog({
           <div className="grid gap-1.5">
             <Label htmlFor="cfc-email">Client email</Label>
             <Input
+              className={fieldClass}
               id="cfc-email"
               type="email"
               value={email}
@@ -520,6 +525,7 @@ function CreateForClientDialog({
             <div className="flex gap-2">
               <div className="flex-1">
                 <PasswordInput
+                  className={fieldClass}
                   id="cfc-password"
                   styled
                   value={password}
@@ -540,11 +546,21 @@ function CreateForClientDialog({
           <div className="grid grid-cols-2 gap-3">
             <div className="grid gap-1.5">
               <Label htmlFor="cfc-a">Partner 1</Label>
-              <Input id="cfc-a" value={partnerA} onChange={(e) => setPartnerA(e.target.value)} />
+              <Input
+                className={fieldClass}
+                id="cfc-a"
+                value={partnerA}
+                onChange={(e) => setPartnerA(e.target.value)}
+              />
             </div>
             <div className="grid gap-1.5">
               <Label htmlFor="cfc-b">Partner 2</Label>
-              <Input id="cfc-b" value={partnerB} onChange={(e) => setPartnerB(e.target.value)} />
+              <Input
+                className={fieldClass}
+                id="cfc-b"
+                value={partnerB}
+                onChange={(e) => setPartnerB(e.target.value)}
+              />
             </div>
           </div>
           <div className="grid gap-1.5">
@@ -553,7 +569,7 @@ function CreateForClientDialog({
               id="cfc-template"
               value={templateId}
               onChange={(e) => setTemplateId(e.target.value)}
-              className="h-9 rounded-md border border-input bg-transparent px-3 text-sm shadow-sm"
+              className={selectFieldClass}
             >
               {invitationTemplates.map((tpl) => (
                 <option key={tpl.id} value={tpl.id}>
@@ -569,6 +585,7 @@ function CreateForClientDialog({
           <div className="grid gap-1.5">
             <Label htmlFor="cfc-note">Reason</Label>
             <Textarea
+              className={textareaFieldClass}
               id="cfc-note"
               value={note}
               onChange={(e) => setNote(e.target.value)}
@@ -626,10 +643,10 @@ export function AdminInvitationsPage() {
           }}
         >
           <Input
+            className={cn(fieldClass, "h-10 max-w-xs")}
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
             placeholder="Search by slug"
-            className="max-w-xs"
           />
           <Button type="submit" variant="outline">
             Search

@@ -1,6 +1,7 @@
 import { Search } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
+import { fieldClass, selectFieldClass } from "@/components/ui/field-styles";
 
 export type RsvpStatusFilter = "all" | "attending" | "pending" | "declined";
 export type RsvpSort = "newest" | "oldest" | "pax-high" | "pax-low";
@@ -103,13 +104,13 @@ export function RsvpFilters({
             value={search}
             onChange={(e) => onSearchChange(e.target.value)}
             placeholder="Search name or message..."
-            className="h-9 rounded-xl border-0 bg-secondary/70 pl-9 text-sm shadow-none focus-visible:bg-card focus-visible:ring-1"
+            className={cn(fieldClass, "h-10 pl-9")}
           />
         </div>
         <select
           value={circle}
           onChange={(e) => onCircleChange(e.target.value)}
-          className="h-9 appearance-none rounded-xl bg-secondary/70 px-3 pr-8 text-xs font-semibold text-foreground focus:outline-none"
+          className={cn(selectFieldClass, "h-10 w-auto appearance-none pr-8")}
         >
           <option value="all">All Groups</option>
           {circles.map((c) => (
@@ -121,7 +122,7 @@ export function RsvpFilters({
         <select
           value={sort}
           onChange={(e) => onSortChange(e.target.value as RsvpSort)}
-          className="h-9 appearance-none rounded-xl bg-secondary/70 px-3 pr-8 text-xs font-semibold text-foreground focus:outline-none"
+          className={cn(selectFieldClass, "h-10 w-auto appearance-none pr-8")}
         >
           <option value="newest">Newest first</option>
           <option value="oldest">Oldest first</option>
