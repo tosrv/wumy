@@ -130,7 +130,7 @@ export function SettingsPage() {
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
                 placeholder="Your name"
-                className={fieldClass}
+                className={cn(fieldClass, "h-10")}
               />
             </div>
             <div>
@@ -139,7 +139,11 @@ export function SettingsPage() {
               </Label>
               <div className="relative">
                 <Mail className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-                <Input value={email} readOnly className={cn(fieldClass, "pl-9 text-text-muted")} />
+                <Input
+                  value={email}
+                  readOnly
+                  className={cn(fieldClass, "h-10 pl-9 text-text-muted")}
+                />
               </div>
               <p className="mt-1.5 text-xs text-muted-foreground">
                 Email changes are handled via support for now.
@@ -179,7 +183,7 @@ export function SettingsPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Create a strong password"
-                className={fieldClass}
+                className={cn(fieldClass, "h-10")}
               />
               <PasswordRequirements password={password} lang="en" className="mt-2" />
             </div>
@@ -192,7 +196,7 @@ export function SettingsPage() {
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 placeholder="Repeat new password"
-                className={fieldClass}
+                className={cn(fieldClass, "h-10")}
               />
             </div>
           </div>
